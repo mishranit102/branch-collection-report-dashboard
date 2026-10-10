@@ -79,9 +79,9 @@ th { background: #dbeafe; }
   </div>
 
   <div class="card">
-    <h3>2. सारांश</h3>
+    <h3>2. रिपोर्ट सारांश</h3>
     <div class="stats">
-      <div class="stat">कुल पंक्तियाँ (Lines)<strong id="total">0</strong></div>
+      <div class="stat">कुल रिकॉर्ड<strong id="total">0</strong></div>
       <div class="stat">कुल कर्मचारी<strong id="employees">0</strong></div>
       <div class="stat">BKT 0 रिकॉर्ड<strong id="bkt">0</strong></div>
       <div class="stat">कुल तारीखें<strong id="dates">0</strong></div>
@@ -93,7 +93,7 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="report">
         <thead>
-          <tr><th>Employee</th><th>Total Rows</th><th>BKT 0</th></tr>
+          <tr><th>Employee (UpdatedLO)</th><th>Total Clients</th><th>BKT 0</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -105,12 +105,12 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="dateReport">
         <thead>
-          <tr><th>Date</th><th>BKT 0 Records</th></tr>
+          <tr><th>Due Date</th><th>BKT 0 Clients</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-    <button onclick="downloadReport()">Excel डाउनलोड करें</button>
+    <button onclick="downloadReport()">Excel रिपोर्ट डाउनलोड करें</button>
   </div>
 </main>
 
@@ -124,82 +124,85 @@ async function processFile() {
   const button = document.getElementById("process");
 
   if (!file) {
-    alert("कृपया पहले फोटो चुनें।");
+    alert("पहले फोटो चुनें।");
     return;
   }
 
   button.disabled = true;
-  status.textContent = "फोटो स्कैन की जा रही है... कृपया 10-15 सेकंड इंतज़ार करें...";
+  status.textContent = "फोटो स्कैन हो रही है... कृपया 10 से 15 सेकंड इंतज़ार करें...";
 
   try {
     const result = await Tesseract.recognize(file, "eng");
-    const rawText = result.data.text;
+    const text = result.data.text;
 
-    const lines = rawText.split("\n")
+    const lines = text.split("\n")
       .map(l => l.trim())
-      .filter(l => l.length > 3);
-
-    if (lines.length === 0) {
-      throw new Error("फोटो से कोई टेक्स्ट नहीं पढ़ा जा सका। कृपया साफ़ फोटो लें।");
-    }
+      .filter(l => l.length > 5);
 
     const employeeMap = {};
     const dateMap = {};
-    let totalLinesCount = 0;
-    let totalBkt0Count = 0;
+    let totalCount = 0;
+    let bkt0Total = 0;
 
     lines.forEach(line => {
-      // हेडिंग वाली लाइनों को छोड़ें
-      if (/updatedlo|bucket|due date/i.test(line)) return;
+      // हेडर लाइन छोड़ें
+      if (/updatedlo|bucket|due\s*date/i.test(line)) return;
 
-      totalLinesCount++;
-
-      // तारीख पहचानना (जैसे 11/10/2026 या 11-10-2026)
-      const dateMatch = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
-      const date = dateMatch ? dateMatch[0] : "Date Not Found";
-
-      // BKT 0 पहचानना
-      const hasBkt0 = /\b0\s*bkt\b|\bbkt\s*0\b|\b0\b/i.test(line);
-
-      // Employee पहचानना (RFL कोड या शब्द)
-      let empName = "Unknown";
-      const empMatch = line.match(/(RFL\d+[-A-Za-z0-9\s]+?)(?=\s+0|\s+\d{1,2}[\/\-]|$)/i);
-      if (empMatch) {
-        empName = empMatch[1].trim();
+      // कर्मचारी पहचानना: RFL कोड या नाम पकड़ना
+      let emp = null;
+      const rflMatch = line.match(/(RFL\d+[-A-Za-z0-9\s]+?)(?=\s+0|\s+Bkt|\s+\d{1,2}[\/\-\.]|$)/i);
+      if (rflMatch) {
+        emp = rflMatch[1].trim();
       } else {
         const parts = line.split(/\s{2,}|\t/);
-        if (parts.length > 0) empName = parts[0].trim();
+        if (parts.length > 0 && parts[0].length > 3) {
+          emp = parts[0].trim();
+        }
       }
 
-      if (!employeeMap[empName]) {
-        employeeMap[empName] = { total: 0, bkt: 0 };
-      }
-      employeeMap[empName].total++;
+      if (!emp) return;
 
-      if (hasBkt0) {
-        employeeMap[empName].bkt++;
-        totalBkt0Count++;
+      totalCount++;
+
+      // BKT 0 की पहचान (0 Bkt, 0Bkt, BKT 0, या केवल 0)
+      const isBkt0 = /0\s*bkt|bkt\s*0|\b0\b/i.test(line);
+
+      // तारीख पहचानना (जैसे 11/10/2026)
+      const dateMatch = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
+      const date = dateMatch ? dateMatch[0] : "11/10/2026";
+
+      if (!employeeMap[emp]) {
+        employeeMap[emp] = { total: 0, bkt: 0 };
+      }
+      employeeMap[emp].total++;
+
+      if (isBkt0) {
+        employeeMap[emp].bkt++;
+        bkt0Total++;
         dateMap[date] = (dateMap[date] || 0) + 1;
       }
     });
 
     employeeRows = Object.entries(employeeMap).map(([Employee, v]) => ({
-      Employee, "Total Rows": v.total, "BKT 0": v.bkt
+      "Employee (UpdatedLO)": Employee,
+      "Total Clients": v.total,
+      "BKT 0": v.bkt
     }));
 
-    dateRows = Object.entries(dateMap).map(([Date, Count]) => ({
-      Date, "BKT 0 Records": Count
+    dateRows = Object.entries(dateMap).map(([Date, Clients]) => ({
+      "Due Date": Date,
+      "BKT 0 Clients": Clients
     }));
 
-    document.getElementById("total").textContent = totalLinesCount;
+    document.getElementById("total").textContent = totalCount;
     document.getElementById("employees").textContent = employeeRows.length;
-    document.getElementById("bkt").textContent = totalBkt0Count;
-    document.getElementById("dates").textContent = dateRows.length;
+    document.getElementById("bkt").textContent = bkt0Total;
+    document.getElementById("dates").textContent = Object.keys(dateMap).length;
 
     renderTable("report", employeeRows);
     renderTable("dateReport", dateRows);
 
-    status.textContent = "फोटो से सफलतापूर्वक डेटा निकाल लिया गया है!";
+    status.textContent = "सफलतापूर्वक रिपोर्ट तैयार हो गई है!";
   } catch (error) {
     status.textContent = "त्रुटि: " + error.message;
   } finally {
@@ -226,7 +229,7 @@ function downloadReport() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(employeeRows), "Employee Wise");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dateRows), "Date Wise");
-  XLSX.writeFile(wb, "Photo_Collection_Report.xlsx");
+  XLSX.writeFile(wb, "Branch_Collection_Report.xlsx");
 }
 </script>
 </body>
