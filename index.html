@@ -72,16 +72,16 @@ th { background: #dbeafe; }
 
 <main>
   <div class="card">
-    <h3>1. Excel फाइल या Xerox फोटो अपलोड करें</h3>
-    <input type="file" id="file" accept=".xlsx,.xls,.csv,image/*">
+    <h3>1. फोटो अपलोड करें</h3>
+    <input type="file" id="file" accept="image/*,.xlsx,.xls">
     <button id="process" onclick="processFile()">रिपोर्ट बनाएं</button>
-    <p id="status">अभी कोई फाइल अपलोड नहीं हुई है।</p>
+    <p id="status">फोटो अपलोड करने के बाद 'रिपोर्ट बनाएं' दबाएं।</p>
   </div>
 
   <div class="card">
-    <h3>2. रिपोर्ट सारांश</h3>
+    <h3>2. सारांश</h3>
     <div class="stats">
-      <div class="stat">कुल रिकॉर्ड<strong id="total">0</strong></div>
+      <div class="stat">कुल पंक्तियाँ (Lines)<strong id="total">0</strong></div>
       <div class="stat">कुल कर्मचारी<strong id="employees">0</strong></div>
       <div class="stat">BKT 0 रिकॉर्ड<strong id="bkt">0</strong></div>
       <div class="stat">कुल तारीखें<strong id="dates">0</strong></div>
@@ -93,7 +93,7 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="report">
         <thead>
-          <tr><th>Employee (UpdatedLO)</th><th>Total Clients</th><th>BKT 0</th></tr>
+          <tr><th>Employee</th><th>Total Rows</th><th>BKT 0</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -105,12 +105,12 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="dateReport">
         <thead>
-          <tr><th>Due Date</th><th>BKT 0 Clients</th></tr>
+          <tr><th>Date</th><th>BKT 0 Records</th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
-    <button onclick="downloadReport()">Excel रिपोर्ट डाउनलोड करें</button>
+    <button onclick="downloadReport()">Excel डाउनलोड करें</button>
   </div>
 </main>
 
@@ -118,109 +118,88 @@ th { background: #dbeafe; }
 let employeeRows = [];
 let dateRows = [];
 
-function normalize(s) {
-  return String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function findColumn(headers, patterns) {
-  return headers.findIndex(h =>
-    patterns.some(p => normalize(h).includes(p))
-  );
-}
-
 async function processFile() {
   const file = document.getElementById("file").files[0];
   const status = document.getElementById("status");
   const button = document.getElementById("process");
 
   if (!file) {
-    alert("पहले Excel फाइल या फोटो अपलोड करें।");
+    alert("कृपया पहले फोटो चुनें।");
     return;
   }
 
   button.disabled = true;
+  status.textContent = "फोटो स्कैन की जा रही है... कृपया 10-15 सेकंड इंतज़ार करें...";
 
   try {
-    let rows = [];
+    const result = await Tesseract.recognize(file, "eng");
+    const rawText = result.data.text;
 
-    if (file.type.startsWith("image/")) {
-      status.textContent = "फोटो पढ़ी जा रही है, थोड़ा इंतज़ार करें...";
-      const result = await Tesseract.recognize(file, "eng");
-      const text = result.data.text;
-      rows = text.split(/\n/).map(line =>
-        line.split(/\s{2,}|\t/).map(x => x.trim()).filter(Boolean)
-      ).filter(row => row.length);
-      status.textContent = "फोटो स्कैन पूरी हुई...";
-    } else {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      rows = XLSX.utils.sheet_to_json(sheet, {
-        header: 1, defval: "", raw: false
-      });
+    const lines = rawText.split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 3);
+
+    if (lines.length === 0) {
+      throw new Error("फोटो से कोई टेक्स्ट नहीं पढ़ा जा सका। कृपया साफ़ फोटो लें।");
     }
-
-    if (rows.length < 2) {
-      throw new Error("फाइल में डेटा नहीं मिला।");
-    }
-
-    const headers = rows[0].map(x => String(x ?? "").trim());
-    
-    // UpdatedLO, Bucket और Due Date ढूँढना
-    let employeeCol = findColumn(headers, ["updatedlo", "employee", "lo", "staff"]);
-    let bktCol = findColumn(headers, ["bucket", "bkt"]);
-    let dateCol = findColumn(headers, ["due date", "date"]);
-
-    // अगर हेडिंग नहीं मिली तो फिक्स कॉलम नंबर G=6, W=22, Z=25
-    let startIndex = 1;
-    if (employeeCol < 0) employeeCol = 6;
-    if (bktCol < 0) bktCol = 22;
-    if (dateCol < 0) dateCol = 25;
 
     const employeeMap = {};
     const dateMap = {};
-    const validRows = rows.slice(startIndex).filter(r =>
-      r.some(v => String(v ?? "").trim() !== "")
-    );
+    let totalLinesCount = 0;
+    let totalBkt0Count = 0;
 
-    validRows.forEach(r => {
-      const employee = String(r[employeeCol] ?? "").trim() || "Unknown";
-      const date = String(r[dateCol] ?? "").trim() || "Unknown";
-      const bkt = normalize(r[bktCol]);
+    lines.forEach(line => {
+      // हेडिंग वाली लाइनों को छोड़ें
+      if (/updatedlo|bucket|due date/i.test(line)) return;
 
-      if (!employeeMap[employee]) {
-        employeeMap[employee] = { total: 0, bkt: 0 };
+      totalLinesCount++;
+
+      // तारीख पहचानना (जैसे 11/10/2026 या 11-10-2026)
+      const dateMatch = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
+      const date = dateMatch ? dateMatch[0] : "Date Not Found";
+
+      // BKT 0 पहचानना
+      const hasBkt0 = /\b0\s*bkt\b|\bbkt\s*0\b|\b0\b/i.test(line);
+
+      // Employee पहचानना (RFL कोड या शब्द)
+      let empName = "Unknown";
+      const empMatch = line.match(/(RFL\d+[-A-Za-z0-9\s]+?)(?=\s+0|\s+\d{1,2}[\/\-]|$)/i);
+      if (empMatch) {
+        empName = empMatch[1].trim();
+      } else {
+        const parts = line.split(/\s{2,}|\t/);
+        if (parts.length > 0) empName = parts[0].trim();
       }
 
-      employeeMap[employee].total++;
+      if (!employeeMap[empName]) {
+        employeeMap[empName] = { total: 0, bkt: 0 };
+      }
+      employeeMap[empName].total++;
 
-      // "0", "0 bkt", "0bkt" आदि सभी को पहचानना
-      const isBkt0 = ["0", "0 bkt", "bkt 0", "bkt0", "0bkt"].includes(bkt) || bkt.startsWith("0");
-
-      if (isBkt0) {
-        employeeMap[employee].bkt++;
+      if (hasBkt0) {
+        employeeMap[empName].bkt++;
+        totalBkt0Count++;
         dateMap[date] = (dateMap[date] || 0) + 1;
       }
     });
 
     employeeRows = Object.entries(employeeMap).map(([Employee, v]) => ({
-      "Employee (UpdatedLO)": Employee, "Total Clients": v.total, "BKT 0": v.bkt
+      Employee, "Total Rows": v.total, "BKT 0": v.bkt
     }));
 
-    dateRows = Object.entries(dateMap).map(([Date, Clients]) => ({
-      "Due Date": Date, "BKT 0 Clients": Clients
+    dateRows = Object.entries(dateMap).map(([Date, Count]) => ({
+      Date, "BKT 0 Records": Count
     }));
 
-    document.getElementById("total").textContent = validRows.length;
+    document.getElementById("total").textContent = totalLinesCount;
     document.getElementById("employees").textContent = employeeRows.length;
-    document.getElementById("bkt").textContent =
-      employeeRows.reduce((s, r) => s + r["BKT 0"], 0);
+    document.getElementById("bkt").textContent = totalBkt0Count;
     document.getElementById("dates").textContent = dateRows.length;
 
     renderTable("report", employeeRows);
     renderTable("dateReport", dateRows);
 
-    status.textContent = "सफलतापूर्वक रिपोर्ट तैयार हो गई है!";
+    status.textContent = "फोटो से सफलतापूर्वक डेटा निकाल लिया गया है!";
   } catch (error) {
     status.textContent = "त्रुटि: " + error.message;
   } finally {
@@ -231,12 +210,11 @@ async function processFile() {
 function renderTable(id, data) {
   const tbody = document.querySelector("#" + id + " tbody");
   tbody.innerHTML = "";
-
   data.forEach(row => {
     const tr = document.createElement("tr");
-    Object.values(row).forEach(value => {
+    Object.values(row).forEach(val => {
       const td = document.createElement("td");
-      td.textContent = value;
+      td.textContent = val;
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -244,22 +222,11 @@ function renderTable(id, data) {
 }
 
 function downloadReport() {
-  if (!employeeRows.length) {
-    alert("पहले रिपोर्ट बनाएं।");
-    return;
-  }
-
+  if (!employeeRows.length) return alert("पहले रिपोर्ट बनाएं।");
   const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-    wb, XLSX.utils.json_to_sheet(employeeRows), "Employee Wise"
-  );
-
-  XLSX.utils.book_append_sheet(
-    wb, XLSX.utils.json_to_sheet(dateRows), "Date Wise"
-  );
-
-  XLSX.writeFile(wb, "Branch_Collection_Report.xlsx");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(employeeRows), "Employee Wise");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dateRows), "Date Wise");
+  XLSX.writeFile(wb, "Photo_Collection_Report.xlsx");
 }
 </script>
 </body>
