@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branch Collection Report Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0a58ca;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --bg-light: #f3f4f6;
+            --border-color: #d1d5db;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            border-radius: 12px;
+            padding: 24px 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .upload-btn-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.3s ease;
+        }
+
+        .upload-btn-label:hover {
+            background: var(--primary-dark);
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #157347;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background: #b02622;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+
+        .status-info {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+        }
+
+        .image-preview {
+            display: none;
+            width: 100%;
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 16px 0;
+            background: var(--bg-light);
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 380px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        .ocr-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 12px;
+        }
+
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .instruction-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .instruction-card h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .instruction-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instruction-card li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.9rem;
+        }
+
+        .instruction-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+        }
+
+        th {
+            background: var(--bg-light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .report-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .report-card-header {
+            background: var(--white);
+            border-bottom: 2px solid var(--border-color);
+            padding: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .report-card-body {
+            padding: 12px;
+            overflow-x: auto;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .report-table th {
+            background: var(--white);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .empty-state {
+            color: var(--text-light);
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .row-actions button {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 16px 12px;
+            }
+
+            .header h1 {
+                font-size: 1.4rem;
+            }
+
+            .panel {
+                padding: 16px;
+            }
+
+            .upload-section,
+            .button-row,
+            .table-actions {
+                flex-direction: column;
+            }
+
+            .upload-btn-label,
+            button,
+            .table-actions button {
+                width: 100%;
+            }
+
+            .instructions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            td input {
+                font-size: 0.85rem;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Branch Collection Report Dashboard</h1>
+            <p>Upload a photo of your printed Excel report, extract data with OCR, fix errors, and download the final report.</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="panel">
+            <h2 class="section-title">Step 1: Upload Report Photo</h2>
+
+            <div class="upload-section">
+                <label for="imageInput" class="upload-btn-label">
+                    📷 Choose or Capture Photo
+                </label>
+                <input type="file" id="imageInput" accept="image/*" capture="environment">
+            </div>
+
+            <div id="statusMessage" class="status-message status-info" style="display: none;"></div>
+
+            <div id="imagePreview" class="image-preview">
+                <img id="previewImg" alt="Report preview">
+            </div>
+
+            <div class="instructions-grid">
+                <div class="instruction-card">
+                    <h3>📸 How to Capture</h3>
+                    <ul>
+                        <li>Place the printed report on a flat surface</li>
+                        <li>Ensure good lighting (natural light preferred)</li>
+                        <li>Keep the phone steady and straight</li>
+                        <li>Crop tight around the data table</li>
+                    </ul>
+                </div>
+
+                <div class="instruction-card">
+                    <h3>📋 Required Columns</h3>
+                    <ul>
+                        <li>Column G: Employee Name</li>
+                        <li>Column W: BKT (Client status)</li>
+                        <li>Column Z: Date</li>
+                        <li>Centre Name: Branch/Centre</li>
+                    </ul>
+                </div>
+
+                <div class="instruction-card">
+                    <h3>🔧 Fixing OCR Errors</h3>
+                    <ul>
+                        <li>Review extracted text below</li>
+                        <li>Edit table cells directly</li>
+                        <li>Correct names, dates, and values</li>
+                        <li>Delete rows if needed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- OCR Section -->
+        <div class="panel">
+            <h2 class="section-title">Step 2: Extract Data with OCR</h2>
+
+            <div class="button-row">
+                <button id="runOcrBtn" class="btn-primary">🔍 Extract Data from Photo</button>
+                <button id="loadSampleBtn" class="btn-secondary">📊 Load Sample Data</button>
+                <button id="clearBtn" class="btn-secondary">🗑️ Clear All</button>
+            </div>
+
+            <label>Extracted OCR Text:</label>
+            <textarea id="ocrText" class="ocr-textarea" readonly></textarea>
+        </div>
+
+        <!-- Table Editor Section -->
+        <div class="panel">
+            <h2 class="section-title">Step 3: Edit Extracted Data</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Employee Name (G)</th>
+                            <th style="width: 15%;">BKT (W)</th>
+                            <th style="width: 20%;">Date (Z)</th>
+                            <th style="width: 25%;">Centre Name</th>
+                            <th style="width: 15%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable">
+                        <tr>
+                            <td colspan="5" class="empty-state">No data yet. Upload a photo or load sample data.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-actions">
+                <button id="addRowBtn" class="btn-secondary">➕ Add Row</button>
+                <button id="downloadExcelBtn" class="btn-success">⬇️ Download Excel</button>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="panel">
+            <h2 class="section-title">Step 4: Review Generated Reports</h2>
+
+            <div class="reports-grid">
+                <!-- Date-wise BKT 0 Report -->
+                <div class="report-card">
+                    <div class="report-card-header">📅 Date-wise BKT 0 Client Counts</div>
+                    <div class="report-card-body" id="dateWiseBkt0">
+                        <div class="empty-state">No data</div>
+                    </div>
+                </div>
+
+                <!-- Employee-wise Report -->
+                <div class="report-card">
+                    <div class="report-card-header">👤 Employee-wise Total Clients</div>
+                    <div class="report-card-body" id="employeeReport">
+                        <div class="empty-state">No data</div>
+                    </div>
+                </div>
+
+                <!-- Centre-wise Report -->
+                <div class="report-card">
+                    <div class="report-card-header">🏢 Centre Name Summary</div>
+                    <div class="report-card-body" id="centreReport">
+                        <div class="empty-state">No data</div>
+                    </div>
+                </div>
+
+                <!-- BKT Summary Report -->
+                <div class="report-card">
+                    <div class="report-card-header">📊 BKT Summary</div>
+                    <div class="report-card-body" id="bktReport">
+                        <div class="empty-state">No data</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const statusMessage = document.getElementById('statusMessage');
+        const ocrText = document.getElementById('ocrText');
+        const dataTable = document.getElementById('dataTable');
+        const runOcrBtn = document.getElementById('runOcrBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+
+        // State
+        let uploadedImage = null;
+        let currentData = [];
+
+        // Utility: Show status message
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                if (statusMessage.style.display !== 'none') {
+                    statusMessage.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        // Image upload handler
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showStatus('Please select an image file (JPG, PNG, etc.)', 'error');
+                return;
+            }
+
+            uploadedImage = file;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewImg.src = event.target.result;
+                imagePreview.style.display = 'block';
+                showStatus('✓ Photo loaded. Now click "Extract Data" to run OCR.', 'success');
+            };
+            reader.onerror = () => {
+                showStatus('Failed to read the image file.', 'error');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Run OCR
+        runOcrBtn.addEventListener('click', async () => {
+            if (!uploadedImage) {
+                showStatus('Please upload a photo first.', 'error');
+                return;
+            }
+
+            runOcrBtn.disabled = true;
+            runOcrBtn.innerHTML = '<span class="loading">⏳</span> Processing...';
+            showStatus('Running OCR on the image...', 'info');
+
+            try {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const result = await Tesseract.recognize(event.target.result, 'eng', {
+                        logger: (m) => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 100);
+                                showStatus(`OCR progress: ${progress}%`, 'info');
+                            }
+                        }
+                    });
+
+                    const extractedText = result.data.text || '';
+                    ocrText.value = extractedText;
+
+                    const rows = parseOCRText(extractedText);
+                    if (rows.length === 0) {
+                        currentData = [];
+                        renderTable();
+                        showStatus('OCR completed but no table data found. Please check the image or enter data manually.', 'warning');
+                    } else {
+                        currentData = rows;
+                        renderTable();
+                        showStatus(`✓ OCR complete! Found ${rows.length} rows. Please review and correct any errors.`, 'success');
+                    }
+
+                    runOcrBtn.disabled = false;
+                    runOcrBtn.innerHTML = '🔍 Extract Data from Photo';
+                };
+                reader.readAsDataURL(uploadedImage);
+            } catch (error) {
+                console.error('OCR Error:', error);
+                showStatus('OCR failed. Please try a clearer photo or enter data manually.', 'error');
+                runOcrBtn.disabled = false;
+                runOcrBtn.innerHTML = '🔍 Extract Data from Photo';
+            }
+        });
+
+        // Parse OCR text into rows
+        function parseOCRText(text) {
+            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const rows = [];
+
+            for (const line of lines) {
+                // Skip header rows and special markers
+                if (line.toLowerCase().includes('employee') ||
+                    line.toLowerCase().includes('date') ||
+                    line.toLowerCase().includes('centre') ||
+                    line.toLowerCase().includes('bkt') ||
+                    line.toLowerCase().includes('total') ||
+                    line.toLowerCase().includes('summary') ||
+                    /^[-=]{3,}/.test(line)) {
+                    continue;
+                }
+
+                // Try to extract date (DD/MM/YYYY or MM/DD/YYYY or YYYY-MM-DD)
+                const dateMatch = line.match(/(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{1,2}-\d{1,2})/);
+                if (!dateMatch) continue;
+
+                const date = dateMatch[0];
+
+                // Try to extract BKT (number)
+                const bktMatch = line.match(/\b(\d+)\b/);
+                if (!bktMatch) continue;
+
+                const bkt = bktMatch[1];
+
+                // Extract employee name (everything before date)
+                let employee = line.substring(0, line.indexOf(date)).trim();
+                employee = employee.replace(/\s+/g, ' ').trim();
+                if (!employee) employee = 'Unknown';
+
+                // Extract centre (after date and BKT)
+                let centre = line.substring(line.indexOf(date) + date.length).trim();
+                centre = centre.replace(bkt, '').trim();
+                centre = centre.replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
+                if (!centre) centre = 'Unknown';
+
+                rows.push({ employee, bkt, date, centre });
+            }
+
+            return rows;
+        }
+
+        // Load sample data
+        loadSampleBtn.addEventListener('click', () => {
+            currentData = [
+                { employee: 'Alice Johnson', bkt: '0', date: '2024-03-15', centre: 'Main Branch' },
+                { employee: 'Bob Smith', bkt: '1', date: '2024-03-15', centre: 'North Branch' },
+                { employee: 'Carol White', bkt: '0', date: '2024-03-16', centre: 'Main Branch' },
+                { employee: 'David Brown', bkt: '2', date: '2024-03-16', centre: 'East Branch' },
+                { employee: 'Eve Davis', bkt: '0', date: '2024-03-17', centre: 'West Branch' },
+                { employee: 'Frank Miller', bkt: '1', date: '2024-03-17', centre: 'South Branch' }
+            ];
+            renderTable();
+            ocrText.value = 'Sample data loaded for testing.';
+            showStatus('✓ Sample data loaded. Test the dashboard and export Excel.', 'success');
+        });
+
+        // Clear all
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Clear all data?')) {
+                currentData = [];
+                renderTable();
+                ocrText.value = '';
+                uploadedImage = null;
+                imagePreview.style.display = 'none';
+                showStatus('All data cleared.', 'info');
+            }
+        });
+
+        // Render table
+        function renderTable() {
+            if (currentData.length === 0) {
+                dataTable.innerHTML = '<tr><td colspan="5" class="empty-state">No data. Upload a photo or load sample data.</td></tr>';
+                generateReports();
+                return;
+            }
+
+            let html = '';
+            currentData.forEach((row, idx) => {
+                html += `
+                    <tr>
+                        <td><input type="text" value="${escapeHtml(row.employee)}" data-field="employee" data-row="${idx}"></td>
+                        <td><input type="text" value="${escapeHtml(row.bkt)}" data-field="bkt" data-row="${idx}"></td>
+                        <td><input type="text" value="${escapeHtml(row.date)}" data-field="date" data-row="${idx}"></td>
+                        <td><input type="text" value="${escapeHtml(row.centre)}" data-field="centre" data-row="${idx}"></td>
+                        <td>
+                            <div class="row-actions">
+                                <button class="btn-danger" onclick="deleteRow(${idx})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            dataTable.innerHTML = html;
+
+            // Bind input listeners
+            document.querySelectorAll('#dataTable input').forEach(input => {
+                input.addEventListener('change', () => {
+                    const row = parseInt(input.dataset.row);
+                    const field = input.dataset.field;
+                    currentData[row][field] = input.value;
+                    generateReports();
+                });
+            });
+
+            generateReports();
+        }
+
+        // Delete row
+        window.deleteRow = (idx) => {
+            currentData.splice(idx, 1);
+            renderTable();
+        };
+
+        // Add row
+        addRowBtn.addEventListener('click', () => {
+            currentData.push({ employee: '', bkt: '', date: '', centre: '' });
+            renderTable();
+        });
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Generate reports
+        function generateReports() {
+            if (currentData.length === 0) {
+                document.getElementById('dateWiseBkt0').innerHTML = '<div class="empty-state">No data</div>';
+                document.getElementById('employeeReport').innerHTML = '<div class="empty-state">No data</div>';
+                document.getElementById('centreReport').innerHTML = '<div class="empty-state">No data</div>';
+                document.getElementById('bktReport').innerHTML = '<div class="empty-state">No data</div>';
+                return;
+            }
+
+            // Date-wise BKT 0
+            const dateMap = new Map();
+            currentData.forEach(row => {
+                if (row.bkt === '0' || row.bkt === '0.0') {
+                    const key = row.date || 'Unknown';
+                    dateMap.set(key, (dateMap.get(key) || 0) + 1);
+                }
+            });
+            renderReportTable('dateWiseBkt0', Array.from(dateMap.entries()).map(([date, count]) => [date, count]), ['Date', 'BKT 0 Count']);
+
+            // Employee-wise total
+            const employeeMap = new Map();
+            currentData.forEach(row => {
+                const key = row.employee || 'Unknown';
+                employeeMap.set(key, (employeeMap.get(key) || 0) + 1);
+            });
+            renderReportTable('employeeReport', Array.from(employeeMap.entries()).map(([emp, count]) => [emp, count]), ['Employee', 'Total Count']);
+
+            // Centre-wise
+            const centreMap = new Map();
+            currentData.forEach(row => {
+                const key = row.centre || 'Unknown';
+                centreMap.set(key, (centreMap.get(key) || 0) + 1);
+            });
+            renderReportTable('centreReport', Array.from(centreMap.entries()).map(([centre, count]) => [centre, count]), ['Centre', 'Count']);
+
+            // BKT-wise
+            const bktMap = new Map();
+            currentData.forEach(row => {
+                const key = row.bkt || 'Unknown';
+                bktMap.set(key, (bktMap.get(key) || 0) + 1);
+            });
+            renderReportTable('bktReport', Array.from(bktMap.entries()).map(([bkt, count]) => [bkt, count]), ['BKT', 'Count']);
+        }
+
+        // Render report table
+        function renderReportTable(containerId, data, headers) {
+            const container = document.getElementById(containerId);
+            if (data.length === 0) {
+                container.innerHTML = '<div class="empty-state">No data</div>';
+                return;
+            }
+
+            let html = '<table class="report-table"><thead><tr>';
+            headers.forEach(h => html += `<th>${h}</th>`);
+            html += '</tr></thead><tbody>';
+            data.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => html += `<td>${escapeHtml(String(cell))}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Download Excel
+        downloadExcelBtn.addEventListener('click', () => {
+            if (currentData.length === 0) {
+                showStatus('No data to export. Add rows or load sample data.', 'error');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+
+            // Data sheet
+            const dataSheetData = currentData.map(row => ({
+                'Employee Name': row.employee,
+                'BKT': row.bkt,
+                'Date': row.date,
+                'Centre Name': row.centre
+            }));
+            const dataSheet = XLSX.utils.json_to_sheet(dataSheetData);
+            XLSX.utils.book_append_sheet(workbook, dataSheet, 'Extracted Data');
+
+            // Date-wise BKT 0
+            const dateMap = new Map();
+            currentData.forEach(row => {
+                if (row.bkt === '0' || row.bkt === '0.0') {
+                    const key = row.date || 'Unknown';
+                    dateMap.set(key, (dateMap.get(key) || 0) + 1);
+                }
+            });
+            const dateSheetData = Array.from(dateMap.entries()).map(([date, count]) => ({ 'Date': date, 'BKT 0 Count': count }));
+            const dateSheet = XLSX.utils.json_to_sheet(dateSheetData);
+            XLSX.utils.book_append_sheet(workbook, dateSheet, 'Date-wise BKT 0');
+
+            // Employee-wise
+            const employeeMap = new Map();
+            currentData.forEach(row => {
+                const key = row.employee || 'Unknown';
+                employeeMap.set(key, (employeeMap.get(key) || 0) + 1);
+            });
+            const empSheetData = Array.from(employeeMap.entries()).map(([emp, count]) => ({ 'Employee Name': emp, 'Total Count': count }));
+            const empSheet = XLSX.utils.json_to_sheet(empSheetData);
+            XLSX.utils.book_append_sheet(workbook, empSheet, 'Employee Summary');
+
+            // Centre-wise
+            const centreMap = new Map();
+            currentData.forEach(row => {
+                const key = row.centre || 'Unknown';
+                centreMap.set(key, (centreMap.get(key) || 0) + 1);
+            });
+            const centreSheetData = Array.from(centreMap.entries()).map(([centre, count]) => ({ 'Centre Name': centre, 'Total Count': count }));
+            const centreSheet = XLSX.utils.json_to_sheet(centreSheetData);
+            XLSX.utils.book_append_sheet(workbook, centreSheet, 'Centre Summary');
+
+            // BKT-wise
+            const bktMap = new Map();
+            currentData.forEach(row => {
+                const key = row.bkt || 'Unknown';
+                bktMap.set(key, (bktMap.get(key) || 0) + 1);
+            });
+            const bktSheetData = Array.from(bktMap.entries()).map(([bkt, count]) => ({ 'BKT': bkt, 'Total Count': count }));
+            const bktSheet = XLSX.utils.json_to_sheet(bktSheetData);
+            XLSX.utils.book_append_sheet(workbook, bktSheet, 'BKT Summary');
+
+            // Download
+            XLSX.writeFile(workbook, 'Branch_Collection_Report.xlsx');
+            showStatus('✓ Excel file downloaded to your device!', 'success');
+        });
+
+        // Initial state
+        renderTable();
+    </script>
+</body>
+</html>
