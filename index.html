@@ -60,7 +60,7 @@ button:disabled { opacity: .5; }
 table { width: 100%; border-collapse: collapse; background: white; }
 th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
 th { background: #dbeafe; }
-#status { white-space: pre-wrap; }
+#status { white-space: pre-wrap; font-weight: bold; }
 </style>
 </head>
 
@@ -93,7 +93,7 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="report">
         <thead>
-          <tr><th>Employee</th><th>Total Clients</th><th>BKT 0</th></tr>
+          <tr><th>Employee (UpdatedLO)</th><th>Total Clients</th><th>BKT 0</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -105,7 +105,7 @@ th { background: #dbeafe; }
     <div class="table-wrap">
       <table id="dateReport">
         <thead>
-          <tr><th>Date</th><th>BKT 0 Clients</th></tr>
+          <tr><th>Due Date</th><th>BKT 0 Clients</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -144,15 +144,13 @@ async function processFile() {
     let rows = [];
 
     if (file.type.startsWith("image/")) {
-      status.textContent =
-        "फोटो पढ़ी जा रही है। साफ और सीधी फोटो का उपयोग करें...";
+      status.textContent = "फोटो पढ़ी जा रही है, थोड़ा इंतज़ार करें...";
       const result = await Tesseract.recognize(file, "eng");
       const text = result.data.text;
       rows = text.split(/\n/).map(line =>
         line.split(/\s{2,}|\t/).map(x => x.trim()).filter(Boolean)
       ).filter(row => row.length);
-      status.textContent =
-        "फोटो पढ़ ली गई है। OCR में कॉलम गलत पढ़े जा सकते हैं; रिपोर्ट जाँच लें।";
+      status.textContent = "फोटो स्कैन पूरी हुई...";
     } else {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
@@ -163,25 +161,25 @@ async function processFile() {
     }
 
     if (rows.length < 2) {
-      throw new Error("फाइल में पर्याप्त डेटा नहीं मिला।");
+      throw new Error("फाइल में डेटा नहीं मिला।");
     }
 
     const headers = rows[0].map(x => String(x ?? "").trim());
-    const employeeCol = findColumn(headers, ["employee", "staff", "collection officer"]);
-    const dateCol = findColumn(headers, ["due date", "date"]);
-    const bktCol = findColumn(headers, ["bkt", "bucket"]);
+    
+    // UpdatedLO, Bucket और Due Date ढूँढना
+    let employeeCol = findColumn(headers, ["updatedlo", "employee", "lo", "staff"]);
+    let bktCol = findColumn(headers, ["bucket", "bkt"]);
+    let dateCol = findColumn(headers, ["due date", "date"]);
 
-    if (employeeCol < 0 || dateCol < 0 || bktCol < 0) {
-      throw new Error(
-        "Employee, Date या BKT कॉलम नहीं मिला।\n" +
-        "आपकी रिपोर्ट में Employee का G, Date का Z और BKT का W कॉलम बताया गया था।\n" +
-        "अगर हेडिंग नहीं हैं, तो कोड में कॉलम नंबर सेट करना होगा।"
-      );
-    }
+    // अगर हेडिंग नहीं मिली तो फिक्स कॉलम नंबर G=6, W=22, Z=25
+    let startIndex = 1;
+    if (employeeCol < 0) employeeCol = 6;
+    if (bktCol < 0) bktCol = 22;
+    if (dateCol < 0) dateCol = 25;
 
     const employeeMap = {};
     const dateMap = {};
-    const validRows = rows.slice(1).filter(r =>
+    const validRows = rows.slice(startIndex).filter(r =>
       r.some(v => String(v ?? "").trim() !== "")
     );
 
@@ -196,7 +194,8 @@ async function processFile() {
 
       employeeMap[employee].total++;
 
-      const isBkt0 = ["0", "bkt 0", "bkt0", "0 bkt"].includes(bkt);
+      // "0", "0 bkt", "0bkt" आदि सभी को पहचानना
+      const isBkt0 = ["0", "0 bkt", "bkt 0", "bkt0", "0bkt"].includes(bkt) || bkt.startsWith("0");
 
       if (isBkt0) {
         employeeMap[employee].bkt++;
@@ -205,11 +204,11 @@ async function processFile() {
     });
 
     employeeRows = Object.entries(employeeMap).map(([Employee, v]) => ({
-      Employee, "Total Clients": v.total, "BKT 0": v.bkt
+      "Employee (UpdatedLO)": Employee, "Total Clients": v.total, "BKT 0": v.bkt
     }));
 
     dateRows = Object.entries(dateMap).map(([Date, Clients]) => ({
-      Date, "BKT 0 Clients": Clients
+      "Due Date": Date, "BKT 0 Clients": Clients
     }));
 
     document.getElementById("total").textContent = validRows.length;
@@ -221,7 +220,7 @@ async function processFile() {
     renderTable("report", employeeRows);
     renderTable("dateReport", dateRows);
 
-    status.textContent = "रिपोर्ट तैयार है। नीचे Excel डाउनलोड करें।";
+    status.textContent = "सफलतापूर्वक रिपोर्ट तैयार हो गई है!";
   } catch (error) {
     status.textContent = "त्रुटि: " + error.message;
   } finally {
