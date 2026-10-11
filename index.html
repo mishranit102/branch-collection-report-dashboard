@@ -3,297 +3,172 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voter ID & PAN Print Portal</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>China Product Profit Portal</title>
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  color: #172033;
-}
-
-header {
-  background: #123b70;
-  color: white;
-  text-align: center;
-  padding: 22px 12px;
-}
-
-header h1 { margin: 0 0 8px; font-size: 23px; }
-header p { margin: 0; font-size: 14px; }
-
-.container {
-  max-width: 760px;
-  margin: 22px auto;
-  padding: 16px;
-}
-
-.panel {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 3px 12px #0000000d;
-}
-
-label {
-  display: block;
-  margin: 14px 0 7px;
-  font-weight: bold;
-}
-
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  font-size: 15px;
-}
-
-button {
-  padding: 12px 16px;
-  border: none;
-  border-radius: 7px;
-  background: #123b70;
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-  margin: 10px 5px 0 0;
-}
-
-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-.secondary { background: #475569; }
-.danger { background: #b91c1c; }
-
-#preview {
-  width: 100%;
-  height: 480px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  margin-top: 12px;
-  background: #f8fafc;
-}
-
-.notice {
-  background: #fff7ed;
-  color: #9a3412;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-@media print {
-  body { background: white; }
-  header, .container, footer { display: none !important; }
-}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;color:#172033}
+header{background:#153e75;color:white;padding:20px;text-align:center}
+main{max-width:700px;margin:auto;padding:14px}
+.card{background:white;padding:16px;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 8px #0001}
+h2{font-size:18px;margin-top:0}
+label{display:block;font-size:14px;font-weight:bold;margin-top:12px}
+input{width:100%;padding:11px;margin-top:5px;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:8px;font-size:16px}
+button{padding:12px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;margin-top:12px;margin-right:5px}
+.secondary{background:#137547}
+.result{background:#e8f7ee;padding:12px;border-radius:9px;margin-top:12px;line-height:1.8}
+small{color:#64748b}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{padding:8px;border:1px solid #ddd;text-align:left}
+.scroll{overflow-x:auto}
 </style>
 </head>
-
 <body>
-
 <header>
-  <h1>Voter ID & PAN Card Print Portal</h1>
-  <p>Document Upload • Preview • Print</p>
+<h1>China Product Profit Portal</h1>
+<p>चीन से सामान खरीदें, खर्च जोड़ें, मुनाफा देखें</p>
 </header>
 
-<div class="container">
+<main>
+<div class="card">
+<h2>1. उत्पाद की जानकारी</h2>
 
-  <div class="panel">
-    <h2>Document Details</h2>
+<label>उत्पाद का नाम</label>
+<input id="name" placeholder="जैसे Mobile Stand">
 
-    <label for="documentType">Document Type</label>
-    <select id="documentType">
-      <option value="Voter ID">Voter ID</option>
-      <option value="PAN Card">PAN Card</option>
-    </select>
+<label>प्रोडक्ट लिंक (वैकल्पिक)</label>
+<input id="link" type="url" placeholder="https://...">
 
-    <label for="customerName">Customer Name (Optional)</label>
-    <input id="customerName" type="text"
-      placeholder="Enter customer name">
+<label>कितने पीस खरीदेंगे?</label>
+<input id="qty" type="number" value="10" min="1">
 
-    <label for="reference">Application / Reference Number (Optional)</label>
-    <input id="reference" type="text"
-      placeholder="Enter reference number">
+<label>चीन में प्रति पीस कीमत (₹)</label>
+<input id="buy" type="number" value="100" min="0">
 
-    <label for="documentFile">Upload Authorized Document (PDF/Image)</label>
-    <input id="documentFile" type="file"
-      accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*">
+<label>कुल शिपिंग खर्च (₹)</label>
+<input id="ship" type="number" value="500" min="0">
 
-    <p class="notice">
-      केवल अधिकृत स्रोत से प्राप्त असली दस्तावेज़ की PDF या image
-      अपलोड करें। यह पोर्टल नया सरकारी पहचान पत्र नहीं बनाता।
-      Aadhaar, PAN और Voter ID जैसे संवेदनशील दस्तावेज़ों को
-      सार्वजनिक कंप्यूटर पर सुरक्षित न छोड़ें।
-    </p>
-  </div>
+<label>कुल कस्टम/आयात खर्च (₹)</label>
+<input id="customs" type="number" value="300" min="0">
 
-  <div class="panel">
-    <h2>Document Preview</h2>
-    <p id="status">अभी कोई फाइल अपलोड नहीं हुई है।</p>
+<label>अन्य कुल खर्च (₹)</label>
+<input id="other" type="number" value="100" min="0">
 
-    <iframe id="preview" title="Document Preview"></iframe>
+<label>Meesho पर बिक्री कीमत प्रति पीस (₹)</label>
+<input id="sell" type="number" value="299" min="0">
 
-    <div>
-      <button id="printBtn" disabled>Print Document</button>
-      <button id="clearBtn" class="secondary">Clear</button>
-    </div>
+<label>अनुमानित कटौती प्रति पीस (₹)</label>
+<input id="fee" type="number" value="40" min="0">
 
-    <p id="message" aria-live="polite"></p>
-  </div>
+<button onclick="calculate()">मुनाफा निकालें</button>
+<button class="secondary" onclick="saveProduct()">उत्पाद सेव करें</button>
 
+<div class="result" id="result">
+अपनी जानकारी भरकर मुनाफा निकालें।
+</div>
 </div>
 
-<footer>
-  Private document utility • Not an official government portal
-</footer>
+<div class="card">
+<h2>2. सेव किए गए उत्पाद</h2>
+<button onclick="downloadCSV()">CSV / Excel डाउनलोड करें</button>
+<div class="scroll" id="saved"></div>
+</div>
+
+<div class="card">
+<strong>जरूरी सूचना</strong>
+<p><small>यह अनुमान लगाने वाला डेमो है। वास्तविक आयात खर्च, कस्टम ड्यूटी, लागू प्रमाणपत्र, कर, रिटर्न और Meesho की वर्तमान फीस अलग हो सकती है। कोई निश्चित मुनाफा सुनिश्चित नहीं है।</small></p>
+</div>
+</main>
 
 <script>
-const fileInput = document.getElementById("documentFile");
-const preview = document.getElementById("preview");
-const statusText = document.getElementById("status");
-const printBtn = document.getElementById("printBtn");
-const clearBtn = document.getElementById("clearBtn");
-const message = document.getElementById("message");
+let products = [];
 
-let fileUrl = null;
-let selectedFile = null;
+function val(id){
+ return Math.max(0,Number(document.getElementById(id).value)||0);
+}
 
-fileInput.addEventListener("change", function () {
-  const file = this.files[0];
+function calculate(){
+ const qty=Math.max(1,Math.floor(val("qty")));
+ const buy=val("buy");
+ const ship=val("ship");
+ const customs=val("customs");
+ const other=val("other");
+ const sell=val("sell");
+ const fee=val("fee");
 
-  if (fileUrl) URL.revokeObjectURL(fileUrl);
-  fileUrl = null;
-  selectedFile = null;
-  preview.removeAttribute("src");
-  printBtn.disabled = true;
-  message.textContent = "";
+ const totalCost=qty*buy+ship+customs+other;
+ const costPer=totalCost/qty;
+ const profitPer=sell-fee-costPer;
+ const totalProfit=profitPer*qty;
+ const margin=sell ? profitPer/sell*100 : 0;
+ const fmt=n=>"₹"+n.toLocaleString("en-IN",{maximumFractionDigits:2});
 
-  if (!file) {
-    statusText.textContent = "अभी कोई फाइल अपलोड नहीं हुई है।";
-    return;
-  }
+ document.getElementById("result").innerHTML=
+ "कुल शुरुआती लागत: <b>"+fmt(totalCost)+"</b><br>"+
+ "प्रति पीस लागत: <b>"+fmt(costPer)+"</b><br>"+
+ "प्रति पीस अनुमानित मुनाफा/नुकसान: <b>"+fmt(profitPer)+"</b><br>"+
+ "पूरी मात्रा का अनुमानित मुनाफा/नुकसान: <b>"+fmt(totalProfit)+"</b><br>"+
+ "अनुमानित मुनाफा मार्जिन: <b>"+margin.toFixed(1)+"%</b><br>"+
+ "ब्रेक-ईवन बिक्री कीमत: <b>"+fmt(costPer+fee)+"</b>";
+ return {qty,buy,ship,customs,other,sell,fee,totalCost,costPer,profitPer,totalProfit,margin};
+}
 
-  const allowed = [
-    "application/pdf",
-    "image/png",
-    "image/jpeg",
-    "image/webp"
-  ];
+function saveProduct(){
+ const name=document.getElementById("name").value.trim();
+ if(!name){alert("पहले उत्पाद का नाम लिखें।");return;}
+ const d=calculate();
+ products.push({
+ name,
+ link:document.getElementById("link").value,
+ ...d
+ });
+ showProducts();
+ alert("उत्पाद इस पेज की सूची में सेव हो गया।");
+}
 
-  if (!allowed.includes(file.type)) {
-    statusText.textContent = "केवल PDF, JPG, PNG या WEBP फाइल चुनें।";
-    fileInput.value = "";
-    return;
-  }
+function showProducts(){
+ const box=document.getElementById("saved");
+ if(!products.length){
+ box.innerHTML="<p>अभी कोई उत्पाद सेव नहीं है।</p>";
+ return;
+ }
+ box.innerHTML="<table><tr><th>उत्पाद</th><th>लागत/पीस</th><th>मुनाफा/पीस</th></tr>"+
+ products.map(p=>"<tr><td>"+escapeHTML(p.name)+
+ "</td><td>₹"+p.costPer.toFixed(2)+
+ "</td><td>₹"+p.profitPer.toFixed(2)+"</td></tr>").join("")+
+ "</table>";
+}
 
-  if (file.size > 15 * 1024 * 1024) {
-    statusText.textContent = "फाइल 15 MB से छोटी होनी चाहिए।";
-    fileInput.value = "";
-    return;
-  }
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",
+ '"':"&quot;","'":"&#39;"
+ }[c]));
+}
 
-  selectedFile = file;
-  fileUrl = URL.createObjectURL(file);
-  preview.src = fileUrl;
-  statusText.textContent = "Selected: " + file.name;
-  printBtn.disabled = false;
-});
+function downloadCSV(){
+ if(!products.length){
+ alert("पहले कोई उत्पाद सेव करें।");
+ return;
+ }
+ const headers=["Product","Quantity","Buy Per Piece","Shipping","Customs","Other","Sell Price","Fee","Total Cost","Cost Per Piece","Profit Per Piece","Total Profit","Margin %"];
+ const rows=products.map(p=>[
+ p.name,p.qty,p.buy,p.ship,p.customs,p.other,p.sell,p.fee,
+ p.totalCost,p.costPer,p.profitPer,p.totalProfit,p.margin.toFixed(2)
+ ]);
+ const csv=[headers,...rows].map(row=>
+ row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')
+ ).join("\r\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="China_Product_Research.csv";
+ a.click();
+ URL.revokeObjectURL(url);
+}
 
-printBtn.addEventListener("click", function () {
-  if (!selectedFile || !fileUrl) return;
-
-  // Print only the uploaded document, not the portal.
-  const printWindow = window.open("", "_blank");
-
-  if (!printWindow) {
-    message.textContent =
-      "Popup blocked है। Browser में popups allow करके दोबारा कोशिश करें।";
-    return;
-  }
-
-  const url = fileUrl;
-  const isPdf = selectedFile.type === "application/pdf";
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Print Document</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        html, body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          height: 100%;
-        }
-        img {
-          display: block;
-          width: 100%;
-          height: auto;
-          object-fit: contain;
-        }
-        iframe {
-          width: 100%;
-          height: 100%;
-          border: 0;
-        }
-        @page { margin: 0; }
-      </style>
-    </head>
-    <body>
-      ${isPdf
-        ? '<iframe id="pdfFrame"></iframe>'
-        : '<img id="docImage" alt="Uploaded document">'}
-      <script>
-        const done = () => {
-          setTimeout(() => window.print(), 700);
-        };
-        ${isPdf
-          ? `document.getElementById('pdfFrame').src = ${JSON.stringify(url)};
-             document.getElementById('pdfFrame').onload = done;`
-          : `const img = document.getElementById('docImage');
-             img.onload = done;
-             img.onerror = () => alert('Image could not be loaded.');
-             img.src = ${JSON.stringify(url)};`}
-      <\/script>
-    </body>
-    </html>
-  `);
-
-  printWindow.document.close();
-});
-
-clearBtn.addEventListener("click", function () {
-  if (fileUrl) URL.revokeObjectURL(fileUrl);
-
-  fileUrl = null;
-  selectedFile = null;
-  fileInput.value = "";
-  document.getElementById("customerName").value = "";
-  document.getElementById("reference").value = "";
-  preview.removeAttribute("src");
-  printBtn.disabled = true;
-  statusText.textContent = "अभी कोई फाइल अपलोड नहीं हुई है।";
-  message.textContent = "";
-});
+showProducts();
+calculate();
 </script>
-
 </body>
 </html>
