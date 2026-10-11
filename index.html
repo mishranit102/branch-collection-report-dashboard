@@ -2,138 +2,97 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voter ID Demo Print</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ID Card Demo Print</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  padding: 15px;
+body{font-family:Arial;background:#edf1f5;padding:12px}
+.box{max-width:700px;margin:auto;background:white;padding:15px;border-radius:10px}
+input,select,textarea,button{
+ width:100%;padding:11px;margin:6px 0;
+ box-sizing:border-box;font-size:15px
 }
-.container {
-  max-width: 500px;
-  margin: auto;
-  background: white;
-  padding: 18px;
-  border-radius: 10px;
-}
-input, select, textarea, button {
-  width: 100%;
-  padding: 10px;
-  margin: 7px 0;
-  box-sizing: border-box;
-}
-button {
-  background: #176b45;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-}
-.card {
-  margin-top: 20px;
-  padding: 15px;
-  border: 2px solid #777;
-  background: white;
-  position: relative;
-  overflow: hidden;
-}
-.card h3 {
-  text-align: center;
-  color: #176b45;
-}
-.details {
-  display: flex;
-  gap: 12px;
-}
-#preview {
-  width: 100px;
-  height: 120px;
-  object-fit: cover;
-  border: 1px solid #aaa;
-}
-.demo {
-  color: #c62828;
-  font-weight: bold;
-  text-align: center;
-}
-@media print {
-  body * { visibility: hidden; }
-  #card, #card * { visibility: visible; }
-  #card {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 85mm;
-    box-sizing: border-box;
-  }
-  .demo { color: #c62828 !important; }
+button{background:#176b45;color:white;border:0;border-radius:5px}
+.card{background:#fff;border:2px solid #777;padding:14px;
+ margin:15px 0;position:relative;overflow:hidden}
+.head{text-align:center;color:#176b45;font-weight:bold}
+.water{text-align:center;color:#c22;font-weight:bold;
+ border:1px dashed #c22;padding:4px}
+.row{display:flex;gap:12px;align-items:flex-start}
+.photo{width:100px;height:120px;object-fit:cover;border:1px solid #aaa}
+.info{font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+@media print{
+ body{background:white;padding:0}
+ body *{visibility:hidden}
+ #previewCards,#previewCards *{visibility:visible}
+ #previewCards{position:absolute;left:0;top:0;width:100%}
+ .card{width:85mm;min-height:50mm;box-sizing:border-box;
+ page-break-after:always;margin:0 0 8mm}
+ .no-print{display:none!important}
 }
 </style>
 </head>
-
 <body>
-<div class="container">
-<h2>Voter ID Demo Card</h2>
+<div class="box no-print">
+<h2>Demo ID Card Maker</h2>
+<p>यह केवल नमूना कार्ड है, सरकारी पहचान पत्र नहीं।</p>
 
-<input id="name" placeholder="पूरा नाम">
-<input id="father" placeholder="पिता/माता/पति का नाम">
-<input id="dob" type="date" aria-label="जन्मतिथि">
-
+<input id="nm" placeholder="पूरा नाम">
+<input id="parent" placeholder="पिता/माता/पति का नाम">
+<input id="dob" type="date">
 <select id="gender">
 <option value="">लिंग चुनें</option>
-<option>पुरुष</option>
-<option>महिला</option>
-<option>अन्य</option>
+<option>पुरुष</option><option>महिला</option><option>अन्य</option>
 </select>
-
-<textarea id="address" placeholder="पूरा पता"></textarea>
-
-<label>अपनी फोटो चुनें:</label>
-<input type="file" id="photo" accept="image/*">
-
-<button onclick="makeCard()">कार्ड तैयार करें</button>
-
-<div id="card" class="card">
-  <h3>VOTER ID — DEMO</h3>
-  <p class="demo">SAMPLE ONLY — NOT A GOVERNMENT ID</p>
-  <div class="details">
-    <div>
-      <p><b>नाम:</b> <span id="pname">—</span></p>
-      <p><b>पिता/माता/पति:</b> <span id="pfather">—</span></p>
-      <p><b>जन्मतिथि:</b> <span id="pdob">—</span></p>
-      <p><b>लिंग:</b> <span id="pgender">—</span></p>
-    </div>
-    <img id="preview" alt="चुनी गई फोटो">
-  </div>
-  <p><b>पता:</b> <span id="paddress">—</span></p>
+<textarea id="addr" placeholder="पूरा पता"></textarea>
+<label>फोटो चुनें</label>
+<input id="pic" type="file" accept="image/*">
+<button onclick="updateCard()">प्रीव्यू तैयार करें</button>
+<button onclick="window.print()">Print / PDF Save</button>
 </div>
 
-<button onclick="window.print()">Print / Save as PDF</button>
+<div id="previewCards">
+<div class="card">
+<div class="head">IDENTITY CARD — DEMO</div>
+<div class="water">SAMPLE ONLY · NOT A GOVERNMENT ID</div>
+<div class="row">
+<img class="photo" id="p1" alt="फोटो">
+<div class="info">
+<b>नाम:</b> <span id="n1">—</span><br>
+<b>पिता/माता/पति:</b> <span id="f1">—</span><br>
+<b>जन्मतिथि:</b> <span id="d1">—</span><br>
+<b>लिंग:</b> <span id="g1">—</span>
+</div>
+</div>
+<p class="info"><b>पता:</b> <span id="a1">—</span></p>
+</div>
+
+<div class="card">
+<div class="head">IDENTITY CARD — DEMO (BACK)</div>
+<div class="water">SAMPLE ONLY · NOT A GOVERNMENT ID</div>
+<p><b>पता / Address:</b></p>
+<p id="a2" class="info">—</p>
+<p class="info">यह एक नमूना प्रिंट है। सरकारी पहचान के लिए मान्य नहीं।</p>
+</div>
 </div>
 
 <script>
-function makeCard() {
-  document.getElementById("pname").textContent =
-    document.getElementById("name").value || "—";
-  document.getElementById("pfather").textContent =
-    document.getElementById("father").value || "—";
-  document.getElementById("pdob").textContent =
-    document.getElementById("dob").value || "—";
-  document.getElementById("pgender").textContent =
-    document.getElementById("gender").value || "—";
-  document.getElementById("paddress").textContent =
-    document.getElementById("address").value || "—";
+function updateCard(){
+ const val=id=>document.getElementById(id).value;
+ document.getElementById('n1').textContent=val('nm')||'—';
+ document.getElementById('f1').textContent=val('parent')||'—';
+ document.getElementById('d1').textContent=val('dob')||'—';
+ document.getElementById('g1').textContent=val('gender')||'—';
+ document.getElementById('a1').textContent=val('addr')||'—';
+ document.getElementById('a2').textContent=val('addr')||'—';
 
-  const file = document.getElementById("photo").files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById("preview").src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
+ const file=document.getElementById('pic').files[0];
+ if(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+   document.getElementById('p1').src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+ }
 }
 </script>
 </body>
