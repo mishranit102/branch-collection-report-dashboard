@@ -1,236 +1,299 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Branch Collection Dashboard</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<title>Voter ID & PAN Print Portal</title>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
   background: #f1f5f9;
-  margin: 0;
-  color: #1e293b;
+  color: #172033;
 }
+
 header {
-  background: #123c69;
+  background: #123b70;
   color: white;
-  padding: 20px;
   text-align: center;
+  padding: 22px 12px;
 }
-main { padding: 15px; max-width: 900px; margin: auto; }
-.card {
-  background: white;
+
+header h1 { margin: 0 0 8px; font-size: 23px; }
+header p { margin: 0; font-size: 14px; }
+
+.container {
+  max-width: 760px;
+  margin: 22px auto;
   padding: 16px;
-  margin: 12px 0;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #0001;
 }
-input, button {
-  box-sizing: border-box;
+
+.panel {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 12px #0000000d;
+}
+
+label {
+  display: block;
+  margin: 14px 0 7px;
+  font-weight: bold;
+}
+
+input, select {
   width: 100%;
   padding: 12px;
-  margin: 8px 0;
+  border: 1px solid #cbd5e1;
   border-radius: 7px;
+  font-size: 15px;
 }
-input { border: 1px solid #cbd5e1; }
+
 button {
+  padding: 12px 16px;
   border: none;
-  background: #1769aa;
+  border-radius: 7px;
+  background: #123b70;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
+  margin: 10px 5px 0 0;
 }
-button:disabled { opacity: .5; }
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
 }
-.stat {
-  background: #e0f2fe;
-  padding: 15px;
-  border-radius: 10px;
+
+.secondary { background: #475569; }
+.danger { background: #b91c1c; }
+
+#preview {
+  width: 100%;
+  height: 480px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  margin-top: 12px;
+  background: #f8fafc;
 }
-.stat strong { display: block; font-size: 25px; margin-top: 8px; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: white; }
-th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-th { background: #dbeafe; }
-#status { white-space: pre-wrap; font-weight: bold; }
+
+.notice {
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media print {
+  body { background: white; }
+  header, .container, footer { display: none !important; }
+}
 </style>
 </head>
 
 <body>
+
 <header>
-  <h2>Branch Collection Dashboard</h2>
-  <p>Employee Wise • Date Wise • BKT 0 Report</p>
+  <h1>Voter ID & PAN Card Print Portal</h1>
+  <p>Document Upload • Preview • Print</p>
 </header>
 
-<main>
-  <div class="card">
-    <h3>1. फोटो अपलोड करें</h3>
-    <input type="file" id="file" accept="image/*,.xlsx,.xls">
-    <button id="process" onclick="processFile()">रिपोर्ट बनाएं</button>
-    <p id="status">फोटो अपलोड करने के बाद 'रिपोर्ट बनाएं' दबाएं।</p>
+<div class="container">
+
+  <div class="panel">
+    <h2>Document Details</h2>
+
+    <label for="documentType">Document Type</label>
+    <select id="documentType">
+      <option value="Voter ID">Voter ID</option>
+      <option value="PAN Card">PAN Card</option>
+    </select>
+
+    <label for="customerName">Customer Name (Optional)</label>
+    <input id="customerName" type="text"
+      placeholder="Enter customer name">
+
+    <label for="reference">Application / Reference Number (Optional)</label>
+    <input id="reference" type="text"
+      placeholder="Enter reference number">
+
+    <label for="documentFile">Upload Authorized Document (PDF/Image)</label>
+    <input id="documentFile" type="file"
+      accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*">
+
+    <p class="notice">
+      केवल अधिकृत स्रोत से प्राप्त असली दस्तावेज़ की PDF या image
+      अपलोड करें। यह पोर्टल नया सरकारी पहचान पत्र नहीं बनाता।
+      Aadhaar, PAN और Voter ID जैसे संवेदनशील दस्तावेज़ों को
+      सार्वजनिक कंप्यूटर पर सुरक्षित न छोड़ें।
+    </p>
   </div>
 
-  <div class="card">
-    <h3>2. रिपोर्ट सारांश</h3>
-    <div class="stats">
-      <div class="stat">कुल रिकॉर्ड<strong id="total">0</strong></div>
-      <div class="stat">कुल कर्मचारी<strong id="employees">0</strong></div>
-      <div class="stat">BKT 0 रिकॉर्ड<strong id="bkt">0</strong></div>
-      <div class="stat">कुल तारीखें<strong id="dates">0</strong></div>
+  <div class="panel">
+    <h2>Document Preview</h2>
+    <p id="status">अभी कोई फाइल अपलोड नहीं हुई है।</p>
+
+    <iframe id="preview" title="Document Preview"></iframe>
+
+    <div>
+      <button id="printBtn" disabled>Print Document</button>
+      <button id="clearBtn" class="secondary">Clear</button>
     </div>
+
+    <p id="message" aria-live="polite"></p>
   </div>
 
-  <div class="card">
-    <h3>3. Employee Wise Report</h3>
-    <div class="table-wrap">
-      <table id="report">
-        <thead>
-          <tr><th>Employee (UpdatedLO)</th><th>Total Clients</th><th>BKT 0</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+</div>
 
-  <div class="card">
-    <h3>4. Date Wise Report</h3>
-    <div class="table-wrap">
-      <table id="dateReport">
-        <thead>
-          <tr><th>Due Date</th><th>BKT 0 Clients</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <button onclick="downloadReport()">Excel रिपोर्ट डाउनलोड करें</button>
-  </div>
-</main>
+<footer>
+  Private document utility • Not an official government portal
+</footer>
 
 <script>
-let employeeRows = [];
-let dateRows = [];
+const fileInput = document.getElementById("documentFile");
+const preview = document.getElementById("preview");
+const statusText = document.getElementById("status");
+const printBtn = document.getElementById("printBtn");
+const clearBtn = document.getElementById("clearBtn");
+const message = document.getElementById("message");
 
-async function processFile() {
-  const file = document.getElementById("file").files[0];
-  const status = document.getElementById("status");
-  const button = document.getElementById("process");
+let fileUrl = null;
+let selectedFile = null;
+
+fileInput.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (fileUrl) URL.revokeObjectURL(fileUrl);
+  fileUrl = null;
+  selectedFile = null;
+  preview.removeAttribute("src");
+  printBtn.disabled = true;
+  message.textContent = "";
 
   if (!file) {
-    alert("पहले फोटो चुनें।");
+    statusText.textContent = "अभी कोई फाइल अपलोड नहीं हुई है।";
     return;
   }
 
-  button.disabled = true;
-  status.textContent = "फोटो स्कैन हो रही है... कृपया 10 से 15 सेकंड इंतज़ार करें...";
+  const allowed = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/webp"
+  ];
 
-  try {
-    const result = await Tesseract.recognize(file, "eng");
-    const text = result.data.text;
-
-    const lines = text.split("\n")
-      .map(l => l.trim())
-      .filter(l => l.length > 5);
-
-    const employeeMap = {};
-    const dateMap = {};
-    let totalCount = 0;
-    let bkt0Total = 0;
-
-    lines.forEach(line => {
-      // हेडर लाइन छोड़ें
-      if (/updatedlo|bucket|due\s*date/i.test(line)) return;
-
-      // कर्मचारी पहचानना: RFL कोड या नाम पकड़ना
-      let emp = null;
-      const rflMatch = line.match(/(RFL\d+[-A-Za-z0-9\s]+?)(?=\s+0|\s+Bkt|\s+\d{1,2}[\/\-\.]|$)/i);
-      if (rflMatch) {
-        emp = rflMatch[1].trim();
-      } else {
-        const parts = line.split(/\s{2,}|\t/);
-        if (parts.length > 0 && parts[0].length > 3) {
-          emp = parts[0].trim();
-        }
-      }
-
-      if (!emp) return;
-
-      totalCount++;
-
-      // BKT 0 की पहचान (0 Bkt, 0Bkt, BKT 0, या केवल 0)
-      const isBkt0 = /0\s*bkt|bkt\s*0|\b0\b/i.test(line);
-
-      // तारीख पहचानना (जैसे 11/10/2026)
-      const dateMatch = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
-      const date = dateMatch ? dateMatch[0] : "11/10/2026";
-
-      if (!employeeMap[emp]) {
-        employeeMap[emp] = { total: 0, bkt: 0 };
-      }
-      employeeMap[emp].total++;
-
-      if (isBkt0) {
-        employeeMap[emp].bkt++;
-        bkt0Total++;
-        dateMap[date] = (dateMap[date] || 0) + 1;
-      }
-    });
-
-    employeeRows = Object.entries(employeeMap).map(([Employee, v]) => ({
-      "Employee (UpdatedLO)": Employee,
-      "Total Clients": v.total,
-      "BKT 0": v.bkt
-    }));
-
-    dateRows = Object.entries(dateMap).map(([Date, Clients]) => ({
-      "Due Date": Date,
-      "BKT 0 Clients": Clients
-    }));
-
-    document.getElementById("total").textContent = totalCount;
-    document.getElementById("employees").textContent = employeeRows.length;
-    document.getElementById("bkt").textContent = bkt0Total;
-    document.getElementById("dates").textContent = Object.keys(dateMap).length;
-
-    renderTable("report", employeeRows);
-    renderTable("dateReport", dateRows);
-
-    status.textContent = "सफलतापूर्वक रिपोर्ट तैयार हो गई है!";
-  } catch (error) {
-    status.textContent = "त्रुटि: " + error.message;
-  } finally {
-    button.disabled = false;
+  if (!allowed.includes(file.type)) {
+    statusText.textContent = "केवल PDF, JPG, PNG या WEBP फाइल चुनें।";
+    fileInput.value = "";
+    return;
   }
-}
 
-function renderTable(id, data) {
-  const tbody = document.querySelector("#" + id + " tbody");
-  tbody.innerHTML = "";
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    Object.values(row).forEach(val => {
-      const td = document.createElement("td");
-      td.textContent = val;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-}
+  if (file.size > 15 * 1024 * 1024) {
+    statusText.textContent = "फाइल 15 MB से छोटी होनी चाहिए।";
+    fileInput.value = "";
+    return;
+  }
 
-function downloadReport() {
-  if (!employeeRows.length) return alert("पहले रिपोर्ट बनाएं।");
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(employeeRows), "Employee Wise");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dateRows), "Date Wise");
-  XLSX.writeFile(wb, "Branch_Collection_Report.xlsx");
-}
+  selectedFile = file;
+  fileUrl = URL.createObjectURL(file);
+  preview.src = fileUrl;
+  statusText.textContent = "Selected: " + file.name;
+  printBtn.disabled = false;
+});
+
+printBtn.addEventListener("click", function () {
+  if (!selectedFile || !fileUrl) return;
+
+  // Print only the uploaded document, not the portal.
+  const printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    message.textContent =
+      "Popup blocked है। Browser में popups allow करके दोबारा कोशिश करें।";
+    return;
+  }
+
+  const url = fileUrl;
+  const isPdf = selectedFile.type === "application/pdf";
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Print Document</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+        }
+        img {
+          display: block;
+          width: 100%;
+          height: auto;
+          object-fit: contain;
+        }
+        iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+        @page { margin: 0; }
+      </style>
+    </head>
+    <body>
+      ${isPdf
+        ? '<iframe id="pdfFrame"></iframe>'
+        : '<img id="docImage" alt="Uploaded document">'}
+      <script>
+        const done = () => {
+          setTimeout(() => window.print(), 700);
+        };
+        ${isPdf
+          ? `document.getElementById('pdfFrame').src = ${JSON.stringify(url)};
+             document.getElementById('pdfFrame').onload = done;`
+          : `const img = document.getElementById('docImage');
+             img.onload = done;
+             img.onerror = () => alert('Image could not be loaded.');
+             img.src = ${JSON.stringify(url)};`}
+      <\/script>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+});
+
+clearBtn.addEventListener("click", function () {
+  if (fileUrl) URL.revokeObjectURL(fileUrl);
+
+  fileUrl = null;
+  selectedFile = null;
+  fileInput.value = "";
+  document.getElementById("customerName").value = "";
+  document.getElementById("reference").value = "";
+  preview.removeAttribute("src");
+  printBtn.disabled = true;
+  statusText.textContent = "अभी कोई फाइल अपलोड नहीं हुई है।";
+  message.textContent = "";
+});
 </script>
+
 </body>
 </html>
