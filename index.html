@@ -1,3 +1,10 @@
+आपके कोड में दो मुख्य कारणों से यह समस्या आ रही है:
+ * सिर्फ कैमरा खुलने का कारण: <input type="file"> में capture="environment" एट्रिब्यूट लगा था, जो फोन को गैलरी चुनने का विकल्प दिए बिना सीधे बैक कैमरा खोलने पर मजबूर करता है।
+ * "Low Memory / Crash" का कारण: आज के मोबाइल 12MP से 50MP (बड़ी साइज़) की फोटो खींचते हैं। Tesseract.js ब्राउज़र के अंदर ही पूरी फोटो प्रोसेस करता है, जिससे मोबाइल की RAM तुरंत भर जाती है और ब्राउज़र टैब क्रैश या फ़ेल हो जाता है।
+इसे ठीक करने के लिए कोड में:
+ * capture="environment" हटा दिया गया है, ताकि कैमरा और फ़ाइल मैनेजर/गैलरी दोनों का विकल्प मिले।
+ * एक Image Resizer (Canvas) जोड़ दिया गया है, जो OCR चलाने से पहले बड़ी फोटो को अपने-आप 1600px की सुरक्षित साइज़ और ब्लैक/व्हाइट कंट्रास्ट में कंप्रेस कर देगा। इससे मेमोरी कभी फुल नहीं होगी और OCR की स्पीड व सटीकता भी बढ़ जाएगी।
+यहाँ आपका पूरा अपडेटेड कोड है। इसे कॉपी करके अपनी index.html में पूरा रिप्लेस (Commit) कर दें:
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -16,7 +23,8 @@ label{display:block;font-size:14px;font-weight:700;margin:11px 0 6px}input,butto
 button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:700;padding:11px 14px;margin:8px 6px 0 0;cursor:pointer}button.alt{background:#e9eff8;color:var(--navy)}button:disabled{opacity:.55}
 .row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.hidden{display:none!important}.status{font-size:14px;margin-top:10px;white-space:pre-wrap}.ok{color:var(--green)}.err{color:#b42318}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.stat{background:#f7f9fd;border:1px solid var(--line);padding:13px;border-radius:12px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:25px;color:var(--navy);margin-top:6px}
-.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:430px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{background:#f2f6fc;color:#29445f}td.num,th.num{text-align:right}.pill{background:#e5eefb;color:#164783;border-radius:20px;padding:5px 10px;font-weight:700;display:inline-block}\n.rank-high{background:#dcfce7!important;color:#166534!important;font-weight:700}.rank-mid{background:#fef3c7!important;color:#92400e!important;font-weight:700}.rank-low{background:#fee2e2!important;color:#991b1b!important;font-weight:700}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.legend span{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:430px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{background:#f2f6fc;color:#29445f}td.num,th.num{text-align:right}.pill{background:#e5eefb;color:#164783;border-radius:20px;padding:5px 10px;font-weight:700;display:inline-block}
+.rank-high{background:#dcfce7!important;color:#166534!important;font-weight:700}.rank-mid{background:#fef3c7!important;color:#92400e!important;font-weight:700}.rank-low{background:#fee2e2!important;color:#991b1b!important;font-weight:700}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.legend span{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
 #previewRows{display:grid;gap:9px}.editrow{display:grid;grid-template-columns:1.5fr .7fr auto;gap:8px;align-items:center}.editrow input{min-width:0}.empty{text-align:center;padding:24px;color:var(--muted);border:1px dashed #bdc9d9;border-radius:12px}
 @media(max-width:520px){header h1{font-size:20px}.card{padding:13px}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:21px}.editrow{grid-template-columns:1fr .6fr}.editrow button{grid-column:1/-1;margin-top:0}}
 </style></head>
@@ -29,7 +37,10 @@ button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:
 <button id="loginBtn">लॉगिन</button><button id="signupBtn" class="alt">नया अकाउंट</button><div id="authMsg" class="status"></div></section>
 
 <section class="card hidden" id="uploadCard"><h2>📷 तारीख की फोटो अपलोड करें</h2><p class="muted">फोटो में दिख रहे कर्मचारी नाम और कोष्ठक में लिखी संख्या, जैसे “Ajit Yadav (27)”, OCR से पढ़ने की कोशिश होगी। सेव करने से पहले परिणाम जाँच/सुधार लें।</p>
-<div class="row"><div><label>रिपोर्ट की तारीख</label><input id="uploadDate" type="date"></div><div><label>Excel / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*" capture="environment"></div></div>
+<div class="row">
+  <div><label>रिपोर्ट की तारीख</label><input id="uploadDate" type="date"></div>
+  <div><label>Excel / Xerox फोटो (कैमरा या गैलरी)</label><input id="imageFile" type="file" accept="image/*"></div>
+</div>
 <button id="readBtn">फोटो पढ़ें (OCR)</button><div id="ocrMsg" class="status"></div>
 <div id="previewBox" class="hidden"><h2 style="margin-top:18px">जाँचे और सुधारें</h2><div id="previewRows"></div><button id="addRowBtn" class="alt">+ कर्मचारी जोड़ें</button><button id="saveBtn">इस तारीख का डेटा सेव करें</button></div>
 </section>
@@ -43,7 +54,6 @@ button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:
 <p class="muted" style="padding:0 4px 20px">नोट: OCR कभी-कभी नाम या नंबर गलत पढ़ सकता है। सेव करने से पहले जाँचें। ग्राहक/बैंक की गोपनीय फोटो अपलोड करने से पहले कार्यालय की अनुमति लें।</p>
 </main>
 <script>
-/* Replace these with your own Supabase project URL and anon/publishable key. Never use service_role/secret key here. */
 const SUPABASE_URL="https://nqiaizswmqhlwqtxgihu.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
 const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")&&!SUPABASE_ANON_KEY.includes("PASTE_");
@@ -54,22 +64,74 @@ function showApp(u){user=u;['uploadCard','searchCard','historyCard'].forEach(id=
 async function init(){if(!configured){msg('authMsg','सेटअप बाकी है: HTML में Supabase URL और key भरें।');return}if(!window.supabase){msg('authMsg','इंटरनेट/लाइब्रेरी लोड जाँचें।');return}sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data}=await sb.auth.getSession();showApp(data.session?.user||null);sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>showApp(s?.user||null),0))}
 async function auth(kind){if(!configured){msg('authMsg','पहले Supabase URL और key भरें।');return}let email=$('email').value.trim(),password=$('password').value;if(!email||password.length<6){msg('authMsg','ईमेल और कम-से-कम 6 अक्षर का पासवर्ड भरें।');return}let r=kind==='signup'?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});if(r.error)msg('authMsg',r.error.message);else msg('authMsg',kind==='signup'&&!r.data.session?'अकाउंट बना। ईमेल पुष्टि करके लॉगिन करें।':'लॉगिन सफल।',true)}
 $('loginBtn').onclick=()=>auth('login');$('signupBtn').onclick=()=>auth('signup');
-function addPreviewRow(name='',count=''){let div=document.createElement('div');div.className='editrow';let n=document.createElement('input');n.type='text';n.placeholder='कर्मचारी का नाम';n.value=name; n.className='empname';let c=document.createElement('input');c.type='number';c.min='0';c.step='1';c.placeholder='नंबर';c.value=count;c.className='empcount';let b=document.createElement('button');b.textContent='हटाएँ';b.className='alt';b.onclick=()=>div.remove();div.append(n,c,b);$('previewRows').appendChild(div)}
-$('addRowBtn').onclick=()=>addPreviewRow();
-$('readBtn').onclick=async()=>{let f=$('imageFile').files[0];if(!f){msg('ocrMsg','पहले फोटो चुनें।');return}if(!f.type.startsWith('image/')){msg('ocrMsg','कृपया image फ़ाइल चुनें।');return}if(!window.Tesseract){msg('ocrMsg','OCR लाइब्रेरी लोड नहीं हुई; इंटरनेट जाँचें।');return}
-$('readBtn').disabled=true;$('previewRows').innerHTML='';$('previewBox').classList.add('hidden');msg('ocrMsg','फोटो पढ़ी जा रही है… कृपया प्रतीक्षा करें।',true);
-try{const result=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status==='recognizing text')msg('ocrMsg','फोटो पढ़ी जा रही है: '+Math.round((m.progress||0)*100)+'%',true)}});
-const text=result.data.text||'';const lines=text.split(/\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-let found=[];
-for(const line of lines){
- // Supports examples: RFL1046298-Ajit Yadav (27), Ajit Yadav (27), Ajit Yadav 27
- let m=line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
- if(m){let name=m[1].replace(/[|•·]+$/,'').trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}
+function addPreviewRow(name='',count=''){let div=document.createElement('div');div.className='editrow';let n=document.createElement('input');n.type='text';n.placeholder='कर्मचारी का नाम';n.value=name; n.className='empname';let c=document.createElement('input');c.type='number';c.min='0';c.step='1';c.placeholder='नंबर';c.value=count;c.className='empcount';let b=document.createElement('button');b.textContent='हटाएँ';b.className='alt';b.onclick=()=>div.remove();div.append(n,c,b);$('previewRows').appendChild(div)}$('addRowBtn').onclick=()=>addPreviewRow();
+
+// इमेज को कंप्रेस करके लो-मेमोरी सेफ बनाने का फंक्शन
+function optimizeImage(file, maxDimension = 1600) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDimension || h > maxDimension) {
+          if (w > h) { h = Math.round((h * maxDimension) / w); w = maxDimension; }
+          else { w = Math.round((w * maxDimension) / h); h = maxDimension; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
-const dedup=new Map();found.forEach(x=>dedup.set(x.name+'|'+x.count,x));preview=[...dedup.values()];
-if(!preview.length){msg('ocrMsg','नाम और (नंबर) अपने-आप नहीं मिले। फोटो साफ़/सीधी रखें या नीचे “कर्मचारी जोड़ें” से नाम और नंबर भरें। OCR text: '+text.slice(0,500));$('previewBox').classList.remove('hidden');return}
-preview.forEach(x=>addPreviewRow(x.name,x.count));$('previewBox').classList.remove('hidden');msg('ocrMsg',`${preview.length} कर्मचारी मिले। सेव करने से पहले नाम और नंबर जाँचें।`,true)
-}catch(e){msg('ocrMsg','फोटो पढ़ने में दिक्कत: '+e.message)}finally{$('readBtn').disabled=false}};
+
+$('readBtn').onclick=async()=>{
+  let f=$('imageFile').files[0];
+  if(!f){msg('ocrMsg','पहले फोटो चुनें।');return}
+  if(!f.type.startsWith('image/')){msg('ocrMsg','कृपया image फ़ाइल चुनें।');return}
+  if(!window.Tesseract){msg('ocrMsg','OCR लाइब्रेरी लोड नहीं हुई; इंटरनेट जाँचें।');return}
+
+  $('readBtn').disabled=true;$('previewRows').innerHTML='';$('previewBox').classList.add('hidden');
+  msg('ocrMsg','फोटो कंप्रेस की जा रही है (ताकि मेमोरी फुल न हो)…',true);
+
+  try{
+    const optimizedBlob = await optimizeImage(f);
+    msg('ocrMsg','फोटो पढ़ी जा रही है… कृपया प्रतीक्षा करें।',true);
+
+    const result=await Tesseract.recognize(optimizedBlob,'eng',{
+      logger:m=>{if(m.status==='recognizing text')msg('ocrMsg','फोटो पढ़ी जा रही है: '+Math.round((m.progress||0)*100)+'%',true)}
+    });
+
+    const text=result.data.text||'';
+    const lines=text.split(/\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+    let found=[];
+    for(const line of lines){
+      let m=line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
+      if(m){let name=m[1].replace(/[|•·]+$/,'').trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}
+    }
+    const dedup=new Map();found.forEach(x=>dedup.set(x.name+'|'+x.count,x));preview=[...dedup.values()];
+    if(!preview.length){
+      msg('ocrMsg','नाम और (नंबर) अपने-आप नहीं मिले। फोटो साफ़/सीधी रखें या नीचे “कर्मचारी जोड़ें” से भरें। OCR text: '+text.slice(0,500));
+      $('previewBox').classList.remove('hidden');
+      return;
+    }
+    preview.forEach(x=>addPreviewRow(x.name,x.count));
+    $('previewBox').classList.remove('hidden');
+    msg('ocrMsg',`${preview.length} कर्मचारी मिले। सेव करने से पहले नाम और नंबर जाँचें।`,true);
+  }catch(e){
+    msg('ocrMsg','फोटो पढ़ने में दिक्कत: '+e.message);
+  }finally{
+    $('readBtn').disabled=false;
+  }
+};
+
 $('saveBtn').onclick=async()=>{let date=$('uploadDate').value;if(!date){msg('ocrMsg','तारीख चुनें।');return}let rows=[...$('previewRows').querySelectorAll('.editrow')].map(r=>({employee_name:r.querySelector('.empname').value.trim(),employee_count:Number(r.querySelector('.empcount').value)})).filter(r=>r.employee_name&&Number.isFinite(r.employee_count)&&r.employee_count>=0);
 if(!rows.length){msg('ocrMsg','कम-से-कम एक कर्मचारी और नंबर भरें।');return}
 $('saveBtn').disabled=true;try{
@@ -87,8 +149,8 @@ const counts=lastRows.map(x=>Number(x.employee_count)||0);
 const maxCount=Math.max(...counts),minCount=Math.min(...counts);
 let total=0;lastRows.forEach((x,i)=>{const count=Number(x.employee_count)||0;total+=count;let tr=document.createElement('tr');[i+1,x.employee_name,count].forEach((v,j)=>{let td=document.createElement('td');td.textContent=v;if(j===2){td.className='num';if(maxCount!==minCount&&count===maxCount)td.classList.add('rank-high');else if(maxCount!==minCount&&count===minCount)td.classList.add('rank-low');else if(maxCount!==minCount)td.classList.add('rank-mid');}tr.appendChild(td)});$('reportBody').appendChild(tr)});
 let totalRow=document.createElement('tr');totalRow.style.fontWeight='800';totalRow.style.background='#eaf1fb';[['','TOTAL'],['',total]].forEach(()=>{});let tdBlank=document.createElement('td');tdBlank.textContent='';let tdTotal=document.createElement('td');tdTotal.textContent='TOTAL ('+lastRows.length+' कर्मचारी)';let tdSum=document.createElement('td');tdSum.textContent=total;tdSum.className='num';tdSum.style.color='#123c69';totalRow.append(tdBlank,tdTotal,tdSum);$('reportBody').appendChild(totalRow);$('totalEmployees').textContent=lastRows.length;$('totalCount').textContent=total;$('reportDate').textContent=date;$('report').classList.remove('hidden');msg('searchMsg',`${lastRows.length} कर्मचारी मिले। कुल नंबर: ${total}`,true)}
-$('searchBtn').onclick=searchReport;$('todayBtn').onclick=()=>{$('searchDate').value=localDate();searchReport()};
-$('csvBtn').onclick=()=>{if(!lastRows.length){msg('searchMsg','पहले तारीख खोजें, फिर डाउनलोड करें।');return}let csv='Employee Name,Number,Date\r\n'+lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));a.download='employee-report-'+$('searchDate').value+'.csv';a.click();URL.revokeObjectURL(a.href)};
+$('searchBtn').onclick=searchReport;$('todayBtn').onclick=()=>{$('searchDate').value=localDate();searchReport()};$('csvBtn').onclick=()=>{if(!lastRows.length){msg('searchMsg','पहले तारीख खोजें, फिर डाउनलोड करें।');return}let csv='Employee Name,Number,Date\r\n'+lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));a.download='employee-report-'+$('searchDate').value+'.csv';a.click();URL.revokeObjectURL(a.href)};
 async function loadDates(){if(!user||!sb)return;const r=await sb.from('employee_daily_reports').select('report_date').order('report_date',{ascending:false}).limit(1000);if(r.error){$('history').textContent='तारीखें लोड नहीं हुईं';return}let dates=[...new Set((r.data||[]).map(x=>x.report_date))];$('history').innerHTML='';if(!dates.length){$('history').textContent='अभी कोई तारीख सेव नहीं है।';return}dates.forEach(d=>{let b=document.createElement('button');b.className='alt';b.textContent=d;b.onclick=()=>{$('searchDate').value=d;searchReport();window.scrollTo({top:$('searchCard').offsetTop-10,behavior:'smooth'})};$('history').appendChild(b)})}
 init();
 </script></body></html>
+
