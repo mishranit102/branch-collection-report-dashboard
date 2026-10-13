@@ -92,4 +92,3 @@ $('csvBtn').onclick=()=>{if(!lastRows.length){msg('searchMsg','पहले त�
 async function loadDates(){if(!user||!sb)return;const r=await sb.from('employee_daily_reports').select('report_date').order('report_date',{ascending:false}).limit(1000);if(r.error){$('history').textContent='तारीखें लोड नहीं हुईं';return}let dates=[...new Set((r.data||[]).map(x=>x.report_date))];$('history').innerHTML='';if(!dates.length){$('history').textContent='अभी कोई तारीख सेव नहीं है।';return}dates.forEach(d=>{let b=document.createElement('button');b.className='alt';b.textContent=d;b.onclick=()=>{$('searchDate').value=d;searchReport();window.scrollTo({top:$('searchCard').offsetTop-10,behavior:'smooth'})};$('history').appendChild(b)})}
 init();
 </script></body></html>
-https://nqiaizswmqhlwqtxgihu.supabase.co sb_publishable_OdkEOKwhdE6pem8YNs27qQ_Fj3kyTbl
