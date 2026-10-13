@@ -45,7 +45,7 @@ button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:
 <script>
 /* Replace these with your own Supabase project URL and anon/publishable key. Never use service_role/secret key here. */
 const SUPABASE_URL="https://nqiaizswmqhlwqtxgihu.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_OdkEOKwhdE6pem8YNs27qQ_Fj3kyTbI";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
 const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")&&!SUPABASE_ANON_KEY.includes("PASTE_");
 const $=id=>document.getElementById(id);let sb=null,user=null,preview=[],lastRows=[];
 function msg(id,s,good=false){$(id).textContent=s;$(id).className='status '+(good?'ok':'err')}
