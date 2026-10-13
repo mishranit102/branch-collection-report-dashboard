@@ -1,306 +1,94 @@
-
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Employee Wise Report Dashboard</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123c69"><title>Employee Wise Report Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#f3f6fb;color:#172437;font-family:Arial,sans-serif}
-header{background:#123c69;color:white;padding:20px 15px}
-header h1{margin:0;font-size:23px}
-main{max-width:1000px;margin:18px auto;padding:0 12px}
-.card{background:white;border:1px solid #dce4ef;border-radius:14px;padding:16px;margin-bottom:15px}
-h2{font-size:18px}
-label{display:block;font-weight:bold;margin:12px 0 6px}
-input{width:100%;padding:11px;border:1px solid #c8d3e1;border-radius:8px}
-button{background:#123c69;color:white;border:0;border-radius:8px;padding:11px 14px;margin:8px 5px 0 0;font-weight:bold}
-.alt{background:#e9eff8;color:#123c69}
-.row{display:flex;gap:12px;flex-wrap:wrap}
-.row>*{flex:1;min-width:150px}
-.hidden{display:none!important}
-.status{font-size:14px;margin-top:10px;white-space:pre-wrap}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.stat{background:#f2f6fc;padding:12px;border-radius:10px}
-.stat span{display:block;font-size:12px;color:#64748b}
-.stat strong{display:block;font-size:24px;margin-top:6px;color:#123c69}
-table{border-collapse:collapse;width:100%;min-width:400px}
-th,td{padding:11px 8px;border-bottom:1px solid #dce4ef;text-align:left}
-th{background:#edf3fb}
-.num{text-align:right}
-.tablewrap{overflow-x:auto}
-.rank-high{background:#dcfce7;color:#166534;font-weight:bold}
-.rank-mid{background:#fef3c7;color:#92400e;font-weight:bold}
-.rank-low{background:#fee2e2;color:#991b1b;font-weight:bold}
-.editrow{display:grid;grid-template-columns:1.5fr .7fr auto;gap:7px;margin:8px 0}
-@media(max-width:520px){
- .stats{gap:5px}.stat{padding:8px}.stat strong{font-size:19px}
- .editrow{grid-template-columns:1fr .7fr}
-}
-</style>
-</head>
-
+:root{--navy:#123c69;--blue:#2459a9;--bg:#f3f6fb;--line:#dce4ef;--text:#172437;--muted:#64748b;--green:#087443}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Devanagari",sans-serif}
+header{background:linear-gradient(120deg,#123c69,#2459a9);color:#fff;padding:22px 16px}
+header h1{margin:0 0 7px;font-size:23px}header p{margin:0;opacity:.9;font-size:14px;line-height:1.5}
+main{max-width:1050px;margin:18px auto;padding:0 12px}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:16px;margin-bottom:15px;box-shadow:0 4px 14px #17365d08}
+h2{font-size:18px;margin:0 0 13px}.muted{font-size:13px;color:var(--muted);line-height:1.55}
+label{display:block;font-size:14px;font-weight:700;margin:11px 0 6px}input,button{font:inherit}input[type=email],input[type=password],input[type=date],input[type=file],input[type=text],input[type=number]{width:100%;padding:11px;border:1px solid #c8d3e1;border-radius:9px;background:#fff}
+button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:700;padding:11px 14px;margin:8px 6px 0 0;cursor:pointer}button.alt{background:#e9eff8;color:var(--navy)}button:disabled{opacity:.55}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.hidden{display:none!important}.status{font-size:14px;margin-top:10px;white-space:pre-wrap}.ok{color:var(--green)}.err{color:#b42318}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.stat{background:#f7f9fd;border:1px solid var(--line);padding:13px;border-radius:12px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:25px;color:var(--navy);margin-top:6px}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:430px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{background:#f2f6fc;color:#29445f}td.num,th.num{text-align:right}.pill{background:#e5eefb;color:#164783;border-radius:20px;padding:5px 10px;font-weight:700;display:inline-block}\n.rank-high{background:#dcfce7!important;color:#166534!important;font-weight:700}.rank-mid{background:#fef3c7!important;color:#92400e!important;font-weight:700}.rank-low{background:#fee2e2!important;color:#991b1b!important;font-weight:700}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.legend span{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
+#previewRows{display:grid;gap:9px}.editrow{display:grid;grid-template-columns:1.5fr .7fr auto;gap:8px;align-items:center}.editrow input{min-width:0}.empty{text-align:center;padding:24px;color:var(--muted);border:1px dashed #bdc9d9;border-radius:12px}
+@media(max-width:520px){header h1{font-size:20px}.card{padding:13px}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:21px}.editrow{grid-template-columns:1fr .6fr}.editrow button{grid-column:1/-1;margin-top:0}}
+</style></head>
 <body>
-<header>
-<h1>📊 Employee Wise Report</h1>
-<p>तारीख चुनें → Search करें → TOTAL देखें</p>
-</header>
-
+<header><h1>📊 Employee Wise Report</h1><p>तारीख चुनें → Search करें → कर्मचारी का नाम और उसका नंबर देखें</p></header>
 <main>
-<section class="card" id="setupCard">
-<h2>🔐 पोर्टल लॉगिन</h2>
-<p>ऑनलाइन सेव करने के लिए Supabase URL और Key सेट करें।</p>
-<label>ईमेल</label>
-<input id="email" type="email" placeholder="ईमेल">
-<label>पासवर्ड</label>
-<input id="password" type="password" placeholder="कम-से-कम 6 अक्षर">
-<button onclick="auth('login')">लॉगिन</button>
-<button class="alt" onclick="auth('signup')">नया अकाउंट</button>
-<div id="authMsg" class="status"></div>
+<section class="card" id="setupCard"><h2>🔐 ऑनलाइन पोर्टल लॉगिन</h2><p class="muted">एक बार Supabase URL/Key सेट होने के बाद, जिन मोबाइलों पर रिपोर्ट देखनी है वहाँ अलग-अलग ईमेल/पासवर्ड से अकाउंट बनाकर लॉगिन करें। सभी लॉगिन उपयोगकर्ता साझा रिपोर्ट देख सकेंगे।</p>
+<label>ईमेल</label><input id="email" type="email" placeholder="ईमेल">
+<label>पासवर्ड</label><input id="password" type="password" placeholder="कम-से-कम 6 अक्षर">
+<button id="loginBtn">लॉगिन</button><button id="signupBtn" class="alt">नया अकाउंट</button><div id="authMsg" class="status"></div></section>
+
+<section class="card hidden" id="uploadCard"><h2>📷 तारीख की फोटो अपलोड करें</h2><p class="muted">फोटो में दिख रहे कर्मचारी नाम और कोष्ठक में लिखी संख्या, जैसे “Ajit Yadav (27)”, OCR से पढ़ने की कोशिश होगी। सेव करने से पहले परिणाम जाँच/सुधार लें।</p>
+<div class="row"><div><label>रिपोर्ट की तारीख</label><input id="uploadDate" type="date"></div><div><label>Excel / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*" capture="environment"></div></div>
+<button id="readBtn">फोटो पढ़ें (OCR)</button><div id="ocrMsg" class="status"></div>
+<div id="previewBox" class="hidden"><h2 style="margin-top:18px">जाँचे और सुधारें</h2><div id="previewRows"></div><button id="addRowBtn" class="alt">+ कर्मचारी जोड़ें</button><button id="saveBtn">इस तारीख का डेटा सेव करें</button></div>
 </section>
 
-<section class="card hidden" id="uploadCard">
-<h2>📷 फोटो अपलोड करें</h2>
-<label>रिपोर्ट की तारीख</label>
-<input id="uploadDate" type="date">
-<label>Excel / Xerox फोटो</label>
-<input id="imageFile" type="file" accept="image/*" capture="environment">
-<button id="readBtn" onclick="readPhoto()">फोटो पढ़ें (OCR)</button>
-<div id="ocrMsg" class="status"></div>
-<div id="previewBox" class="hidden">
-<h2>नाम और नंबर जाँचें</h2>
-<div id="previewRows"></div>
-<button class="alt" onclick="addRow()">+ कर्मचारी जोड़ें</button>
-<button onclick="saveData()">इस तारीख का डेटा सेव करें</button>
-</div>
+<section class="card hidden" id="searchCard"><div class="row" style="align-items:center"><div><h2 style="margin:0">🔎 कर्मचारी रिपोर्ट खोजें</h2><p class="muted" style="margin:6px 0 0">तारीख चुनें और उस दिन के कर्मचारी व नंबर देखें।</p></div><div style="max-width:190px"><label>तारीख</label><input id="searchDate" type="date"></div></div>
+<button id="searchBtn">Search करें</button><button id="todayBtn" class="alt">आज</button><button id="csvBtn" class="alt">CSV डाउनलोड</button>
+<div id="searchMsg" class="status"></div><div id="report" class="hidden"><div class="stats"><div class="stat"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div><div class="stat"><span>कुल नंबर / रिकॉर्ड</span><strong id="totalCount">0</strong></div><div class="stat"><span>रिपोर्ट तारीख</span><strong id="reportDate" style="font-size:16px">—</strong></div></div>
+<div class="legend"><span style="background:#dcfce7;color:#166534">सबसे ज्यादा — Green</span><span style="background:#fef3c7;color:#92400e">बीच के नंबर — Yellow</span><span style="background:#fee2e2;color:#991b1b">सबसे कम — Red</span></div><div class="tablewrap"><table><thead><tr><th>क्रम</th><th>कर्मचारी का नाम</th><th class="num">नंबर</th></tr></thead><tbody id="reportBody"></tbody></table></div></div>
 </section>
-
-<section class="card hidden" id="searchCard">
-<h2>🔎 Date Wise Report</h2>
-<label>तारीख चुनें</label>
-<input id="searchDate" type="date">
-<button onclick="searchReport()">Search करें</button>
-<button class="alt" onclick="downloadCSV()">CSV डाउनलोड</button>
-<div id="searchMsg" class="status"></div>
-
-<div id="report" class="hidden">
-<div class="stats">
-<div class="stat"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div>
-<div class="stat"><span>कुल नंबर (TOTAL)</span><strong id="totalCount">0</strong></div>
-<div class="stat"><span>रिपोर्ट तारीख</span><strong id="reportDate">—</strong></div>
-</div>
-
-<p>
-<span class="rank-high"> Green = सबसे ज्यादा </span>
-<span class="rank-mid"> Yellow = बीच के नंबर </span>
-<span class="rank-low"> Red = सबसे कम </span>
-</p>
-
-<div class="tablewrap">
-<table>
-<thead><tr><th>क्रम</th><th>कर्मचारी का पूरा नाम</th><th class="num">नंबर</th></tr></thead>
-<tbody id="reportBody"></tbody>
-</table>
-</div>
-</div>
-</section>
-
-<section class="card hidden" id="historyCard">
-<h2>🗂️ पुरानी तारीखें</h2>
-<div id="history"></div>
-</section>
+<section class="card hidden" id="historyCard"><h2>🗂️ उपलब्ध तारीखें</h2><p class="muted">पहले सेव की गई तारीखें यहाँ दिखेंगी। तारीख पर टैप करके रिपोर्ट खोलें।</p><div id="history" class="row"></div></section>
+<p class="muted" style="padding:0 4px 20px">नोट: OCR कभी-कभी नाम या नंबर गलत पढ़ सकता है। सेव करने से पहले जाँचें। ग्राहक/बैंक की गोपनीय फोटो अपलोड करने से पहले कार्यालय की अनुमति लें।</p>
 </main>
-
 <script>
-// यहाँ अपने Supabase Project की URL और Publishable/anon key डालें।
+/* Replace these with your own Supabase project URL and anon/publishable key. Never use service_role/secret key here. */
 const SUPABASE_URL="PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
 const SUPABASE_ANON_KEY="PASTE_YOUR_SUPABASE_ANON_PUBLIC_KEY_HERE";
-
-let sb=null,user=null,lastRows=[];
-
-function el(id){return document.getElementById(id)}
-function message(id,text){el(id).textContent=text}
-function today(){
- let d=new Date();
- d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
- return d.toISOString().slice(0,10);
+const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")&&!SUPABASE_ANON_KEY.includes("PASTE_");
+const $=id=>document.getElementById(id);let sb=null,user=null,preview=[],lastRows=[];
+function msg(id,s,good=false){$(id).textContent=s;$(id).className='status '+(good?'ok':'err')}
+function localDate(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function showApp(u){user=u;['uploadCard','searchCard','historyCard'].forEach(id=>$(id).classList.toggle('hidden',!u));$('setupCard').classList.toggle('hidden',!!u);if(u){$('uploadDate').value=localDate();$('searchDate').value=localDate();loadDates();searchReport();}}
+async function init(){if(!configured){msg('authMsg','सेटअप बाकी है: HTML में Supabase URL और key भरें।');return}if(!window.supabase){msg('authMsg','इंटरनेट/लाइब्रेरी लोड जाँचें।');return}sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data}=await sb.auth.getSession();showApp(data.session?.user||null);sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>showApp(s?.user||null),0))}
+async function auth(kind){if(!configured){msg('authMsg','पहले Supabase URL और key भरें।');return}let email=$('email').value.trim(),password=$('password').value;if(!email||password.length<6){msg('authMsg','ईमेल और कम-से-कम 6 अक्षर का पासवर्ड भरें।');return}let r=kind==='signup'?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});if(r.error)msg('authMsg',r.error.message);else msg('authMsg',kind==='signup'&&!r.data.session?'अकाउंट बना। ईमेल पुष्टि करके लॉगिन करें।':'लॉगिन सफल।',true)}
+$('loginBtn').onclick=()=>auth('login');$('signupBtn').onclick=()=>auth('signup');
+function addPreviewRow(name='',count=''){let div=document.createElement('div');div.className='editrow';let n=document.createElement('input');n.type='text';n.placeholder='कर्मचारी का नाम';n.value=name; n.className='empname';let c=document.createElement('input');c.type='number';c.min='0';c.step='1';c.placeholder='नंबर';c.value=count;c.className='empcount';let b=document.createElement('button');b.textContent='हटाएँ';b.className='alt';b.onclick=()=>div.remove();div.append(n,c,b);$('previewRows').appendChild(div)}
+$('addRowBtn').onclick=()=>addPreviewRow();
+$('readBtn').onclick=async()=>{let f=$('imageFile').files[0];if(!f){msg('ocrMsg','पहले फोटो चुनें।');return}if(!f.type.startsWith('image/')){msg('ocrMsg','कृपया image फ़ाइल चुनें।');return}if(!window.Tesseract){msg('ocrMsg','OCR लाइब्रेरी लोड नहीं हुई; इंटरनेट जाँचें।');return}
+$('readBtn').disabled=true;$('previewRows').innerHTML='';$('previewBox').classList.add('hidden');msg('ocrMsg','फोटो पढ़ी जा रही है… कृपया प्रतीक्षा करें।',true);
+try{const result=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status==='recognizing text')msg('ocrMsg','फोटो पढ़ी जा रही है: '+Math.round((m.progress||0)*100)+'%',true)}});
+const text=result.data.text||'';const lines=text.split(/\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+let found=[];
+for(const line of lines){
+ // Supports examples: RFL1046298-Ajit Yadav (27), Ajit Yadav (27), Ajit Yadav 27
+ let m=line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
+ if(m){let name=m[1].replace(/[|•·]+$/,'').trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}
 }
-
-async function auth(kind){
- if(!sb){
-  if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_")){
-   message("authMsg","पहले Supabase URL और Key भरें।");
-   return;
-  }
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
- }
- const email=el("email").value.trim();
- const password=el("password").value;
- if(!email||password.length<6){
-  message("authMsg","ईमेल और कम-से-कम 6 अक्षर का पासवर्ड भरें।");
-  return;
- }
- const result=kind==="signup"
-  ?await sb.auth.signUp({email,password})
-  :await sb.auth.signInWithPassword({email,password});
- if(result.error){message("authMsg",result.error.message);return}
- user=result.data.user;
- if(result.data.session)showApp();
- else message("authMsg","अकाउंट बना। ईमेल पुष्टि करके लॉगिन करें।");
-}
-
-function showApp(){
- ["setupCard"].forEach(id=>el(id).classList.add("hidden"));
- ["uploadCard","searchCard","historyCard"].forEach(id=>el(id).classList.remove("hidden"));
- el("uploadDate").value=today();
- el("searchDate").value=today();
- loadDates();
-}
-
-function addRow(name="",count=""){
- const row=document.createElement("div");
- row.className="editrow";
- const n=document.createElement("input");
- n.className="empname";n.placeholder="कर्मचारी का पूरा नाम";n.value=name;
- const c=document.createElement("input");
- c.className="empcount";c.type="number";c.min="0";c.placeholder="नंबर";c.value=count;
- const b=document.createElement("button");
- b.textContent="हटाएँ";b.className="alt";b.onclick=()=>row.remove();
- row.append(n,c,b);el("previewRows").appendChild(row);
-}
-
-async function readPhoto(){
- const file=el("imageFile").files[0];
- if(!file){message("ocrMsg","पहले फोटो चुनें।");return}
- message("ocrMsg","फोटो पढ़ी जा रही है, कृपया प्रतीक्षा करें…");
- try{
-  const result=await Tesseract.recognize(file,"eng");
-  const lines=result.data.text.split(/\n/);
-  el("previewRows").innerHTML="";
-  let found=0;
-  lines.forEach(line=>{
-   const m=line.trim().match(/^(.+?)\s*[\(\[]\s*(\d+)\s*[\)\]]/);
-   if(m){
-    addRow(m[1].trim(),m[2]);found++;
-   }
-  });
-  el("previewBox").classList.remove("hidden");
-  message("ocrMsg",found+" कर्मचारी मिले। नाम और नंबर जाँचें।");
-  if(!found)addRow();
- }catch(e){message("ocrMsg","फोटो पढ़ने में समस्या: "+e.message)}
-}
-
-async function saveData(){
- const date=el("uploadDate").value;
- const rows=[...document.querySelectorAll(".editrow")].map(r=>({
-  employee_name:r.querySelector(".empname").value.trim(),
-  employee_count:Number(r.querySelector(".empcount").value)
- })).filter(r=>r.employee_name&&Number.isFinite(r.employee_count)&&r.employee_count>=0);
-
- if(!date||!rows.length){message("ocrMsg","तारीख, नाम और नंबर भरें।");return}
- if(!sb||!user){message("ocrMsg","पहले लॉगिन करें।");return}
-
- const del=await sb.from("employee_daily_reports").delete()
-  .eq("user_id",user.id).eq("report_date",date);
- if(del.error){message("ocrMsg",del.error.message);return}
-
- const data=rows.map(r=>({...r,user_id:user.id,report_date:date}));
- const ins=await sb.from("employee_daily_reports").insert(data);
- if(ins.error){message("ocrMsg",ins.error.message);return}
-
- message("ocrMsg","डेटा सेव हो गया।");
- el("searchDate").value=date;
- await searchReport();await loadDates();
-}
-
-async function searchReport(){
- if(!sb||!user)return;
- const date=el("searchDate").value;
- if(!date){message("searchMsg","तारीख चुनें।");return}
-
- const result=await sb.from("employee_daily_reports")
-  .select("employee_name,employee_count,report_date")
-  .eq("user_id",user.id).eq("report_date",date)
-  .order("employee_name",{ascending:true});
-
- if(result.error){message("searchMsg",result.error.message);return}
- lastRows=result.data||[];
- if(!lastRows.length){
-  el("report").classList.add("hidden");
-  message("searchMsg","इस तारीख का डेटा नहीं मिला।");
-  return;
- }
-
- const counts=lastRows.map(r=>Number(r.employee_count)||0);
- const max=Math.max(...counts),min=Math.min(...counts);
- let total=0;el("reportBody").innerHTML="";
-
- lastRows.forEach((r,i)=>{
-  const count=Number(r.employee_count)||0;total+=count;
-  const tr=document.createElement("tr");
-  const no=document.createElement("td");no.textContent=i+1;
-  const name=document.createElement("td");name.textContent=r.employee_name;
-  const num=document.createElement("td");num.textContent=count;num.className="num";
-
-  if(max!==min&&count===max)num.classList.add("rank-high");
-  else if(max!==min&&count===min)num.classList.add("rank-low");
-  else if(max!==min)num.classList.add("rank-mid");
-
-  tr.append(no,name,num);el("reportBody").appendChild(tr);
- });
-
- const totalRow=document.createElement("tr");
- totalRow.style.fontWeight="bold";totalRow.style.background="#eaf1fb";
- const blank=document.createElement("td");blank.textContent="";
- const label=document.createElement("td");label.textContent="TOTAL ("+lastRows.length+" कर्मचारी)";
- const sum=document.createElement("td");sum.textContent=total;sum.className="num";
- totalRow.append(blank,label,sum);el("reportBody").appendChild(totalRow);
-
- el("totalEmployees").textContent=lastRows.length;
- el("totalCount").textContent=total;
- el("reportDate").textContent=date;
- el("report").classList.remove("hidden");
- message("searchMsg","रिपोर्ट मिल गई।");
-}
-
-async function loadDates(){
- if(!sb||!user)return;
- const r=await sb.from("employee_daily_reports").select("report_date")
-  .eq("user_id",user.id).order("report_date",{ascending:false}).limit(1000);
- if(r.error)return;
- const dates=[...new Set((r.data||[]).map(x=>x.report_date))];
- el("history").innerHTML="";
- dates.forEach(date=>{
-  const b=document.createElement("button");b.className="alt";b.textContent=date;
-  b.onclick=()=>{el("searchDate").value=date;searchReport()};
-  el("history").appendChild(b);
- });
-}
-
-function downloadCSV(){
- if(!lastRows.length){message("searchMsg","पहले तारीख की रिपोर्ट खोजें।");return}
- let rows=[["Employee Name","Number","Date"],
-  ...lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date])];
- const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
- const a=document.createElement("a");
- a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
- a.download="employee-report-"+el("searchDate").value+".csv";
- a.click();URL.revokeObjectURL(a.href);
-}
-
-(async()=>{
- if(SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")
- &&!SUPABASE_ANON_KEY.includes("PASTE_")){
-  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-  const {data}=await sb.auth.getSession();
-  if(data.session){user=data.session.user;showApp()}
- }
-})();
-</script>
-</body>
-</html>
+const dedup=new Map();found.forEach(x=>dedup.set(x.name+'|'+x.count,x));preview=[...dedup.values()];
+if(!preview.length){msg('ocrMsg','नाम और (नंबर) अपने-आप नहीं मिले। फोटो साफ़/सीधी रखें या नीचे “कर्मचारी जोड़ें” से नाम और नंबर भरें। OCR text: '+text.slice(0,500));$('previewBox').classList.remove('hidden');return}
+preview.forEach(x=>addPreviewRow(x.name,x.count));$('previewBox').classList.remove('hidden');msg('ocrMsg',`${preview.length} कर्मचारी मिले। सेव करने से पहले नाम और नंबर जाँचें।`,true)
+}catch(e){msg('ocrMsg','फोटो पढ़ने में दिक्कत: '+e.message)}finally{$('readBtn').disabled=false}};
+$('saveBtn').onclick=async()=>{let date=$('uploadDate').value;if(!date){msg('ocrMsg','तारीख चुनें।');return}let rows=[...$('previewRows').querySelectorAll('.editrow')].map(r=>({employee_name:r.querySelector('.empname').value.trim(),employee_count:Number(r.querySelector('.empcount').value)})).filter(r=>r.employee_name&&Number.isFinite(r.employee_count)&&r.employee_count>=0);
+if(!rows.length){msg('ocrMsg','कम-से-कम एक कर्मचारी और नंबर भरें।');return}
+$('saveBtn').disabled=true;try{
+const del=await sb.from('employee_daily_reports').delete().eq('user_id',user.id).eq('report_date',date);if(del.error)throw del.error;
+const payload=rows.map(r=>({...r,user_id:user.id,report_date:date}));
+const ins=await sb.from('employee_daily_reports').insert(payload);if(ins.error)throw ins.error;
+msg('ocrMsg',`${date} की ${rows.length} कर्मचारी एंट्री सेव हो गई।`,true);$('searchDate').value=date;await searchReport();await loadDates();
+}catch(e){msg('ocrMsg','डेटा सेव नहीं हुआ: '+e.message)}finally{$('saveBtn').disabled=false}};
+async function searchReport(){if(!user||!sb)return;let date=$('searchDate').value;if(!date){msg('searchMsg','तारीख चुनें।');return}msg('searchMsg','डेटा खोजा जा रहा है…',true);$('report').classList.add('hidden');
+const r=await sb.from('employee_daily_reports').select('employee_name,employee_count,report_date').eq('report_date',date).order('employee_name',{ascending:true});
+if(r.error){msg('searchMsg','डेटा नहीं खुला: '+r.error.message);return}
+lastRows=r.data||[];if(!lastRows.length){msg('searchMsg','इस तारीख का डेटा नहीं मिला। उस दिन की फोटो अपलोड करके OCR चलाएँ।');return}
+$('reportBody').innerHTML='';
+const counts=lastRows.map(x=>Number(x.employee_count)||0);
+const maxCount=Math.max(...counts),minCount=Math.min(...counts);
+let total=0;lastRows.forEach((x,i)=>{const count=Number(x.employee_count)||0;total+=count;let tr=document.createElement('tr');[i+1,x.employee_name,count].forEach((v,j)=>{let td=document.createElement('td');td.textContent=v;if(j===2){td.className='num';if(maxCount!==minCount&&count===maxCount)td.classList.add('rank-high');else if(maxCount!==minCount&&count===minCount)td.classList.add('rank-low');else if(maxCount!==minCount)td.classList.add('rank-mid');}tr.appendChild(td)});$('reportBody').appendChild(tr)});
+let totalRow=document.createElement('tr');totalRow.style.fontWeight='800';totalRow.style.background='#eaf1fb';[['','TOTAL'],['',total]].forEach(()=>{});let tdBlank=document.createElement('td');tdBlank.textContent='';let tdTotal=document.createElement('td');tdTotal.textContent='TOTAL ('+lastRows.length+' कर्मचारी)';let tdSum=document.createElement('td');tdSum.textContent=total;tdSum.className='num';tdSum.style.color='#123c69';totalRow.append(tdBlank,tdTotal,tdSum);$('reportBody').appendChild(totalRow);$('totalEmployees').textContent=lastRows.length;$('totalCount').textContent=total;$('reportDate').textContent=date;$('report').classList.remove('hidden');msg('searchMsg',`${lastRows.length} कर्मचारी मिले। कुल नंबर: ${total}`,true)}
+$('searchBtn').onclick=searchReport;$('todayBtn').onclick=()=>{$('searchDate').value=localDate();searchReport()};
+$('csvBtn').onclick=()=>{if(!lastRows.length){msg('searchMsg','पहले तारीख खोजें, फिर डाउनलोड करें।');return}let csv='Employee Name,Number,Date\r\n'+lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));a.download='employee-report-'+$('searchDate').value+'.csv';a.click();URL.revokeObjectURL(a.href)};
+async function loadDates(){if(!user||!sb)return;const r=await sb.from('employee_daily_reports').select('report_date').order('report_date',{ascending:false}).limit(1000);if(r.error){$('history').textContent='तारीखें लोड नहीं हुईं';return}let dates=[...new Set((r.data||[]).map(x=>x.report_date))];$('history').innerHTML='';if(!dates.length){$('history').textContent='अभी कोई तारीख सेव नहीं है।';return}dates.forEach(d=>{let b=document.createElement('button');b.className='alt';b.textContent=d;b.onclick=()=>{$('searchDate').value=d;searchReport();window.scrollTo({top:$('searchCard').offsetTop-10,behavior:'smooth'})};$('history').appendChild(b)})}
+init();
+</script></body></html>
