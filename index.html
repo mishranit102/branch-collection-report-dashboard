@@ -1,99 +1,306 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ID Card Demo Print</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Employee Wise Report Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <style>
-body{font-family:Arial;background:#edf1f5;padding:12px}
-.box{max-width:700px;margin:auto;background:white;padding:15px;border-radius:10px}
-input,select,textarea,button{
- width:100%;padding:11px;margin:6px 0;
- box-sizing:border-box;font-size:15px
-}
-button{background:#176b45;color:white;border:0;border-radius:5px}
-.card{background:#fff;border:2px solid #777;padding:14px;
- margin:15px 0;position:relative;overflow:hidden}
-.head{text-align:center;color:#176b45;font-weight:bold}
-.water{text-align:center;color:#c22;font-weight:bold;
- border:1px dashed #c22;padding:4px}
-.row{display:flex;gap:12px;align-items:flex-start}
-.photo{width:100px;height:120px;object-fit:cover;border:1px solid #aaa}
-.info{font-size:14px;line-height:1.6;overflow-wrap:anywhere}
-@media print{
- body{background:white;padding:0}
- body *{visibility:hidden}
- #previewCards,#previewCards *{visibility:visible}
- #previewCards{position:absolute;left:0;top:0;width:100%}
- .card{width:85mm;min-height:50mm;box-sizing:border-box;
- page-break-after:always;margin:0 0 8mm}
- .no-print{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6fb;color:#172437;font-family:Arial,sans-serif}
+header{background:#123c69;color:white;padding:20px 15px}
+header h1{margin:0;font-size:23px}
+main{max-width:1000px;margin:18px auto;padding:0 12px}
+.card{background:white;border:1px solid #dce4ef;border-radius:14px;padding:16px;margin-bottom:15px}
+h2{font-size:18px}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input{width:100%;padding:11px;border:1px solid #c8d3e1;border-radius:8px}
+button{background:#123c69;color:white;border:0;border-radius:8px;padding:11px 14px;margin:8px 5px 0 0;font-weight:bold}
+.alt{background:#e9eff8;color:#123c69}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1;min-width:150px}
+.hidden{display:none!important}
+.status{font-size:14px;margin-top:10px;white-space:pre-wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:#f2f6fc;padding:12px;border-radius:10px}
+.stat span{display:block;font-size:12px;color:#64748b}
+.stat strong{display:block;font-size:24px;margin-top:6px;color:#123c69}
+table{border-collapse:collapse;width:100%;min-width:400px}
+th,td{padding:11px 8px;border-bottom:1px solid #dce4ef;text-align:left}
+th{background:#edf3fb}
+.num{text-align:right}
+.tablewrap{overflow-x:auto}
+.rank-high{background:#dcfce7;color:#166534;font-weight:bold}
+.rank-mid{background:#fef3c7;color:#92400e;font-weight:bold}
+.rank-low{background:#fee2e2;color:#991b1b;font-weight:bold}
+.editrow{display:grid;grid-template-columns:1.5fr .7fr auto;gap:7px;margin:8px 0}
+@media(max-width:520px){
+ .stats{gap:5px}.stat{padding:8px}.stat strong{font-size:19px}
+ .editrow{grid-template-columns:1fr .7fr}
 }
 </style>
 </head>
+
 <body>
-<div class="box no-print">
-<h2>Demo ID Card Maker</h2>
-<p>यह केवल नमूना कार्ड है, सरकारी पहचान पत्र नहीं।</p>
+<header>
+<h1>📊 Employee Wise Report</h1>
+<p>तारीख चुनें → Search करें → TOTAL देखें</p>
+</header>
 
-<input id="nm" placeholder="पूरा नाम">
-<input id="parent" placeholder="पिता/माता/पति का नाम">
-<input id="dob" type="date">
-<select id="gender">
-<option value="">लिंग चुनें</option>
-<option>पुरुष</option><option>महिला</option><option>अन्य</option>
-</select>
-<textarea id="addr" placeholder="पूरा पता"></textarea>
-<label>फोटो चुनें</label>
-<input id="pic" type="file" accept="image/*">
-<button onclick="updateCard()">प्रीव्यू तैयार करें</button>
-<button onclick="window.print()">Print / PDF Save</button>
+<main>
+<section class="card" id="setupCard">
+<h2>🔐 पोर्टल लॉगिन</h2>
+<p>ऑनलाइन सेव करने के लिए Supabase URL और Key सेट करें।</p>
+<label>ईमेल</label>
+<input id="email" type="email" placeholder="ईमेल">
+<label>पासवर्ड</label>
+<input id="password" type="password" placeholder="कम-से-कम 6 अक्षर">
+<button onclick="auth('login')">लॉगिन</button>
+<button class="alt" onclick="auth('signup')">नया अकाउंट</button>
+<div id="authMsg" class="status"></div>
+</section>
+
+<section class="card hidden" id="uploadCard">
+<h2>📷 फोटो अपलोड करें</h2>
+<label>रिपोर्ट की तारीख</label>
+<input id="uploadDate" type="date">
+<label>Excel / Xerox फोटो</label>
+<input id="imageFile" type="file" accept="image/*" capture="environment">
+<button id="readBtn" onclick="readPhoto()">फोटो पढ़ें (OCR)</button>
+<div id="ocrMsg" class="status"></div>
+<div id="previewBox" class="hidden">
+<h2>नाम और नंबर जाँचें</h2>
+<div id="previewRows"></div>
+<button class="alt" onclick="addRow()">+ कर्मचारी जोड़ें</button>
+<button onclick="saveData()">इस तारीख का डेटा सेव करें</button>
+</div>
+</section>
+
+<section class="card hidden" id="searchCard">
+<h2>🔎 Date Wise Report</h2>
+<label>तारीख चुनें</label>
+<input id="searchDate" type="date">
+<button onclick="searchReport()">Search करें</button>
+<button class="alt" onclick="downloadCSV()">CSV डाउनलोड</button>
+<div id="searchMsg" class="status"></div>
+
+<div id="report" class="hidden">
+<div class="stats">
+<div class="stat"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div>
+<div class="stat"><span>कुल नंबर (TOTAL)</span><strong id="totalCount">0</strong></div>
+<div class="stat"><span>रिपोर्ट तारीख</span><strong id="reportDate">—</strong></div>
 </div>
 
-<div id="previewCards">
-<div class="card">
-<div class="head">IDENTITY CARD — DEMO</div>
-<div class="water">SAMPLE ONLY · NOT A GOVERNMENT ID</div>
-<div class="row">
-<img class="photo" id="p1" alt="फोटो">
-<div class="info">
-<b>नाम:</b> <span id="n1">—</span><br>
-<b>पिता/माता/पति:</b> <span id="f1">—</span><br>
-<b>जन्मतिथि:</b> <span id="d1">—</span><br>
-<b>लिंग:</b> <span id="g1">—</span>
-</div>
-</div>
-<p class="info"><b>पता:</b> <span id="a1">—</span></p>
-</div>
+<p>
+<span class="rank-high"> Green = सबसे ज्यादा </span>
+<span class="rank-mid"> Yellow = बीच के नंबर </span>
+<span class="rank-low"> Red = सबसे कम </span>
+</p>
 
-<div class="card">
-<div class="head">IDENTITY CARD — DEMO (BACK)</div>
-<div class="water">SAMPLE ONLY · NOT A GOVERNMENT ID</div>
-<p><b>पता / Address:</b></p>
-<p id="a2" class="info">—</p>
-<p class="info">यह एक नमूना प्रिंट है। सरकारी पहचान के लिए मान्य नहीं।</p>
+<div class="tablewrap">
+<table>
+<thead><tr><th>क्रम</th><th>कर्मचारी का पूरा नाम</th><th class="num">नंबर</th></tr></thead>
+<tbody id="reportBody"></tbody>
+</table>
 </div>
 </div>
+</section>
+
+<section class="card hidden" id="historyCard">
+<h2>🗂️ पुरानी तारीखें</h2>
+<div id="history"></div>
+</section>
+</main>
 
 <script>
-function updateCard(){
- const val=id=>document.getElementById(id).value;
- document.getElementById('n1').textContent=val('nm')||'—';
- document.getElementById('f1').textContent=val('parent')||'—';
- document.getElementById('d1').textContent=val('dob')||'—';
- document.getElementById('g1').textContent=val('gender')||'—';
- document.getElementById('a1').textContent=val('addr')||'—';
- document.getElementById('a2').textContent=val('addr')||'—';
+// यहाँ अपने Supabase Project की URL और Publishable/anon key डालें।
+const SUPABASE_URL="PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
+const SUPABASE_ANON_KEY="PASTE_YOUR_SUPABASE_ANON_PUBLIC_KEY_HERE";
 
- const file=document.getElementById('pic').files[0];
- if(file){
-  const reader=new FileReader();
-  reader.onload=e=>{
-   document.getElementById('p1').src=e.target.result;
-  };
-  reader.readAsDataURL(file);
- }
+let sb=null,user=null,lastRows=[];
+
+function el(id){return document.getElementById(id)}
+function message(id,text){el(id).textContent=text}
+function today(){
+ let d=new Date();
+ d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+ return d.toISOString().slice(0,10);
 }
+
+async function auth(kind){
+ if(!sb){
+  if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_")){
+   message("authMsg","पहले Supabase URL और Key भरें।");
+   return;
+  }
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+ }
+ const email=el("email").value.trim();
+ const password=el("password").value;
+ if(!email||password.length<6){
+  message("authMsg","ईमेल और कम-से-कम 6 अक्षर का पासवर्ड भरें।");
+  return;
+ }
+ const result=kind==="signup"
+  ?await sb.auth.signUp({email,password})
+  :await sb.auth.signInWithPassword({email,password});
+ if(result.error){message("authMsg",result.error.message);return}
+ user=result.data.user;
+ if(result.data.session)showApp();
+ else message("authMsg","अकाउंट बना। ईमेल पुष्टि करके लॉगिन करें।");
+}
+
+function showApp(){
+ ["setupCard"].forEach(id=>el(id).classList.add("hidden"));
+ ["uploadCard","searchCard","historyCard"].forEach(id=>el(id).classList.remove("hidden"));
+ el("uploadDate").value=today();
+ el("searchDate").value=today();
+ loadDates();
+}
+
+function addRow(name="",count=""){
+ const row=document.createElement("div");
+ row.className="editrow";
+ const n=document.createElement("input");
+ n.className="empname";n.placeholder="कर्मचारी का पूरा नाम";n.value=name;
+ const c=document.createElement("input");
+ c.className="empcount";c.type="number";c.min="0";c.placeholder="नंबर";c.value=count;
+ const b=document.createElement("button");
+ b.textContent="हटाएँ";b.className="alt";b.onclick=()=>row.remove();
+ row.append(n,c,b);el("previewRows").appendChild(row);
+}
+
+async function readPhoto(){
+ const file=el("imageFile").files[0];
+ if(!file){message("ocrMsg","पहले फोटो चुनें।");return}
+ message("ocrMsg","फोटो पढ़ी जा रही है, कृपया प्रतीक्षा करें…");
+ try{
+  const result=await Tesseract.recognize(file,"eng");
+  const lines=result.data.text.split(/\n/);
+  el("previewRows").innerHTML="";
+  let found=0;
+  lines.forEach(line=>{
+   const m=line.trim().match(/^(.+?)\s*[\(\[]\s*(\d+)\s*[\)\]]/);
+   if(m){
+    addRow(m[1].trim(),m[2]);found++;
+   }
+  });
+  el("previewBox").classList.remove("hidden");
+  message("ocrMsg",found+" कर्मचारी मिले। नाम और नंबर जाँचें।");
+  if(!found)addRow();
+ }catch(e){message("ocrMsg","फोटो पढ़ने में समस्या: "+e.message)}
+}
+
+async function saveData(){
+ const date=el("uploadDate").value;
+ const rows=[...document.querySelectorAll(".editrow")].map(r=>({
+  employee_name:r.querySelector(".empname").value.trim(),
+  employee_count:Number(r.querySelector(".empcount").value)
+ })).filter(r=>r.employee_name&&Number.isFinite(r.employee_count)&&r.employee_count>=0);
+
+ if(!date||!rows.length){message("ocrMsg","तारीख, नाम और नंबर भरें।");return}
+ if(!sb||!user){message("ocrMsg","पहले लॉगिन करें।");return}
+
+ const del=await sb.from("employee_daily_reports").delete()
+  .eq("user_id",user.id).eq("report_date",date);
+ if(del.error){message("ocrMsg",del.error.message);return}
+
+ const data=rows.map(r=>({...r,user_id:user.id,report_date:date}));
+ const ins=await sb.from("employee_daily_reports").insert(data);
+ if(ins.error){message("ocrMsg",ins.error.message);return}
+
+ message("ocrMsg","डेटा सेव हो गया।");
+ el("searchDate").value=date;
+ await searchReport();await loadDates();
+}
+
+async function searchReport(){
+ if(!sb||!user)return;
+ const date=el("searchDate").value;
+ if(!date){message("searchMsg","तारीख चुनें।");return}
+
+ const result=await sb.from("employee_daily_reports")
+  .select("employee_name,employee_count,report_date")
+  .eq("user_id",user.id).eq("report_date",date)
+  .order("employee_name",{ascending:true});
+
+ if(result.error){message("searchMsg",result.error.message);return}
+ lastRows=result.data||[];
+ if(!lastRows.length){
+  el("report").classList.add("hidden");
+  message("searchMsg","इस तारीख का डेटा नहीं मिला।");
+  return;
+ }
+
+ const counts=lastRows.map(r=>Number(r.employee_count)||0);
+ const max=Math.max(...counts),min=Math.min(...counts);
+ let total=0;el("reportBody").innerHTML="";
+
+ lastRows.forEach((r,i)=>{
+  const count=Number(r.employee_count)||0;total+=count;
+  const tr=document.createElement("tr");
+  const no=document.createElement("td");no.textContent=i+1;
+  const name=document.createElement("td");name.textContent=r.employee_name;
+  const num=document.createElement("td");num.textContent=count;num.className="num";
+
+  if(max!==min&&count===max)num.classList.add("rank-high");
+  else if(max!==min&&count===min)num.classList.add("rank-low");
+  else if(max!==min)num.classList.add("rank-mid");
+
+  tr.append(no,name,num);el("reportBody").appendChild(tr);
+ });
+
+ const totalRow=document.createElement("tr");
+ totalRow.style.fontWeight="bold";totalRow.style.background="#eaf1fb";
+ const blank=document.createElement("td");blank.textContent="";
+ const label=document.createElement("td");label.textContent="TOTAL ("+lastRows.length+" कर्मचारी)";
+ const sum=document.createElement("td");sum.textContent=total;sum.className="num";
+ totalRow.append(blank,label,sum);el("reportBody").appendChild(totalRow);
+
+ el("totalEmployees").textContent=lastRows.length;
+ el("totalCount").textContent=total;
+ el("reportDate").textContent=date;
+ el("report").classList.remove("hidden");
+ message("searchMsg","रिपोर्ट मिल गई।");
+}
+
+async function loadDates(){
+ if(!sb||!user)return;
+ const r=await sb.from("employee_daily_reports").select("report_date")
+  .eq("user_id",user.id).order("report_date",{ascending:false}).limit(1000);
+ if(r.error)return;
+ const dates=[...new Set((r.data||[]).map(x=>x.report_date))];
+ el("history").innerHTML="";
+ dates.forEach(date=>{
+  const b=document.createElement("button");b.className="alt";b.textContent=date;
+  b.onclick=()=>{el("searchDate").value=date;searchReport()};
+  el("history").appendChild(b);
+ });
+}
+
+function downloadCSV(){
+ if(!lastRows.length){message("searchMsg","पहले तारीख की रिपोर्ट खोजें।");return}
+ let rows=[["Employee Name","Number","Date"],
+  ...lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date])];
+ const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
+ a.download="employee-report-"+el("searchDate").value+".csv";
+ a.click();URL.revokeObjectURL(a.href);
+}
+
+(async()=>{
+ if(SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")
+ &&!SUPABASE_ANON_KEY.includes("PASTE_")){
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  const {data}=await sb.auth.getSession();
+  if(data.session){user=data.session.user;showApp()}
+ }
+})();
 </script>
 </body>
 </html>
