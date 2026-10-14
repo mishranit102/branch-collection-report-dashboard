@@ -1,71 +1,599 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#123c69"><title>Employee Wise Report Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Employee Wise Daily Report Dashboard</title>
+<!-- Google Fonts & CDN Libraries -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
 <style>
-:root{--navy:#123c69;--blue:#2459a9;--bg:#f3f6fb;--line:#dce4ef;--text:#172437;--muted:#64748b;--green:#087443}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Devanagari",sans-serif}
-header{background:linear-gradient(120deg,#123c69,#2459a9);color:#fff;padding:22px 16px}
-header h1{margin:0 0 7px;font-size:23px}header p{margin:0;opacity:.9;font-size:14px;line-height:1.5}
-main{max-width:1050px;margin:18px auto;padding:0 12px}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:16px;margin-bottom:15px;box-shadow:0 4px 14px #17365d08}
-h2{font-size:18px;margin:0 0 13px}.muted{font-size:13px;color:var(--muted);line-height:1.55}
-label{display:block;font-size:14px;font-weight:700;margin:11px 0 6px}input,button{font:inherit}input[type=email],input[type=password],input[type=date],input[type=file],input[type=text],input[type=number]{width:100%;padding:11px;border:1px solid #c8d3e1;border-radius:9px;background:#fff}
-button{border:0;border-radius:9px;background:var(--navy);color:#fff;font-weight:700;padding:11px 14px;margin:8px 6px 0 0;cursor:pointer}button.alt{background:#e9eff8;color:var(--navy)}button:disabled{opacity:.55}
-.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.hidden{display:none!important}.status{font-size:14px;margin-top:10px;white-space:pre-wrap}.ok{color:var(--green)}.err{color:#b42318}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.stat{background:#f7f9fd;border:1px solid var(--line);padding:13px;border-radius:12px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;font-size:25px;color:var(--navy);margin-top:6px}
-.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:430px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{background:#f2f6fc;color:#29445f}td.num,th.num{text-align:right}.pill{background:#e5eefb;color:#164783;border-radius:20px;padding:5px 10px;font-weight:700;display:inline-block}
-.rank-high{background:#dcfce7!important;color:#166534!important;font-weight:700}.rank-mid{background:#fef3c7!important;color:#92400e!important;font-weight:700}.rank-low{background:#fee2e2!important;color:#991b1b!important;font-weight:700}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.legend span{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:700}
-#previewRows{display:grid;gap:9px}.editrow{display:grid;grid-template-columns:1.5fr .7fr auto;gap:8px;align-items:center}.editrow input{min-width:0}.empty{text-align:center;padding:24px;color:var(--muted);border:1px dashed #bdc9d9;border-radius:12px}
-@media(max-width:520px){header h1{font-size:20px}.card{padding:13px}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:21px}.editrow{grid-template-columns:1fr .6fr}.editrow button{grid-column:1/-1;margin-top:0}}
-</style></head>
+:root {
+  --primary: #1e3a8a;
+  --primary-dark: #0f172a;
+  --primary-light: #3b82f6;
+  --accent: #2563eb;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --danger: #ef4444;
+  --danger-bg: #fee2e2;
+  --success: #10b981;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 14px -2px rgba(15,23,42,0.08);
+  --shadow-lg: 0 10px 25px -5px rgba(15,23,42,0.1);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #fff;
+  padding: 22px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: var(--shadow-md);
+}
+.header-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.header-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-title p {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-top: 3px;
+}
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.08);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 13px;
+}
+.role-pill {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.role-admin { background: #ef4444; color: #fff; }
+.role-viewer { background: #3b82f6; color: #fff; }
+
+main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s ease;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+input[type=email], input[type=password], input[type=date], input[type=file], input[type=text], input[type=number] {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-main);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+.row { display: flex; gap: 14px; flex-wrap: wrap; }
+.row > * { flex: 1; min-width: 200px; }
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all .15s ease;
+  background: var(--primary);
+  color: #fff;
+}
+button:hover:not(:disabled) {
+  background: #172554;
+  transform: translateY(-1px);
+}
+button:active:not(:disabled) { transform: translateY(0); }
+button:disabled { opacity: .6; cursor: not-allowed; }
+button.alt {
+  background: #f1f5f9;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+button.alt:hover:not(:disabled) { background: #e2e8f0; color: #000; }
+button.danger { background: var(--danger); color: #fff; }
+button.danger:hover:not(:disabled) { background: #dc2626; }
+button.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+.status {
+  font-size: 13px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  display: none;
+}
+.status.active { display: block; }
+.status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* KPI Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--primary-light);
+}
+.stat-card span {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+}
+.stat-card strong {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-top: 4px;
+}
+
+/* Professional Table */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+table { width: 100%; border-collapse: collapse; min-width: 520px; text-align: left; }
+th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--border);
+}
+td {
+  padding: 13px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f8fafc; }
+.num-col { text-align: right; }
+
+.sno-pill {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.count-badge {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Progress bar */
+.share-bar-wrap {
+  width: 100%;
+  max-width: 130px;
+  background: #e2e8f0;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.share-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* OCR Preview */
+#previewRows { display: grid; gap: 8px; margin-top: 14px; }
+.editrow {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.history-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip {
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s ease;
+}
+.chip:hover {
+  background: #eff6ff;
+  border-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.hidden { display: none !important; }
+
+/* Printable / PDF Styling Container */
+#pdfContent { background: #fff; padding: 6px; border-radius: 8px; }
+
+@media (max-width: 640px) {
+  header { padding: 16px; }
+  .header-container { flex-direction: column; align-items: flex-start; }
+  .editrow { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
 <body>
-<header><h1>📊 Employee Wise Report</h1><p>तारीख चुनें → Search करें → कर्मचारी का नाम और उसका नंबर देखें</p></header>
+
+<header>
+  <div class="header-container">
+    <div class="header-title">
+      <h1><i data-lucide="bar-chart-3"></i> Employee Daily Performance</h1>
+      <p>कर्मचारी रिपोर्ट पोर्टल — तारीख चुनें, खोजें एवं रिपोर्ट डाउनलोड करें</p>
+    </div>
+    <div id="userHeaderSection" class="hidden">
+      <div class="user-badge">
+        <span id="userEmailTxt">user@domain.com</span>
+        <span id="userRoleBadge" class="role-pill role-viewer">Staff</span>
+        <button id="logoutBtn" class="alt sm" title="लॉगआउट"><i data-lucide="log-out" style="width:14px;height:14px"></i></button>
+      </div>
+    </div>
+  </div>
+</header>
+
 <main>
-<section class="card" id="setupCard"><h2>🔐 ऑनलाइन पोर्टल लॉगिन</h2><p class="muted">एक बार Supabase URL/Key सेट होने के बाद, जिन मोबाइलों पर रिपोर्ट देखनी है वहाँ अलग-अलग ईमेल/पासवर्ड से अकाउंट बनाकर लॉगिन करें। सभी लॉगिन उपयोगकर्ता साझा रिपोर्ट देख सकेंगे।</p>
-<label>ईमेल</label><input id="email" type="email" placeholder="ईमेल">
-<label>पासवर्ड</label><input id="password" type="password" placeholder="कम-से-कम 6 अक्षर">
-<button id="loginBtn">लॉगिन</button><button id="signupBtn" class="alt">नया अकाउंट</button><div id="authMsg" class="status"></div></section>
+  <!-- 1. LOGIN / SETUP CARD -->
+  <section class="card" id="setupCard">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title"><i data-lucide="lock"></i> पोर्टल लॉगिन</h2>
+        <p class="card-desc">सत्यापित ईमेल व पासवर्ड से लॉगिन करें। एडमिन को डेटा अपलोड और डिलीट का अधिकार प्राप्त है।</p>
+      </div>
+    </div>
+    <div class="row">
+      <div><label>ईमेल (Email Address)</label><input id="email" type="email" placeholder="name@company.com"></div>
+      <div><label>पासवर्ड (Password)</label><input id="password" type="password" placeholder="कम से कम 6 अक्षर"></div>
+    </div>
+    <div style="margin-top:14px;">
+      <button id="loginBtn"><i data-lucide="log-in"></i> लॉगिन करें</button>
+      <button id="signupBtn" class="alt"><i data-lucide="user-plus"></i> नया खाता बनाएँ</button>
+    </div>
+    <div id="authMsg" class="status"></div>
+  </section>
 
-<section class="card hidden" id="uploadCard"><h2>📷 तारीख की फोटो अपलोड करें</h2><p class="muted">फोटो में दिख रहे कर्मचारी नाम और कोष्ठक में लिखी संख्या, जैसे “Ajit Yadav (27)”, OCR से पढ़ने की कोशिश होगी। सेव करने से पहले परिणाम जाँच/सुधार लें।</p>
-<div class="row">
-  <div><label>रिपोर्ट की तारीख</label><input id="uploadDate" type="date"></div>
-  <div><label>Excel / Xerox फोटो (कैमरा या गैलरी)</label><input id="imageFile" type="file" accept="image/*"></div>
-</div>
-<button id="readBtn">फोटो पढ़ें (OCR)</button><div id="ocrMsg" class="status"></div>
-<div id="previewBox" class="hidden"><h2 style="margin-top:18px">जाँचे और सुधारें</h2><div id="previewRows"></div><button id="addRowBtn" class="alt">+ कर्मचारी जोड़ें</button><button id="saveBtn">इस तारीख का डेटा सेव करें</button></div>
-</section>
+  <!-- 2. ADMIN ONLY: OCR UPLOAD CARD -->
+  <section class="card hidden" id="uploadCard">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title"><i data-lucide="camera"></i> तारीख की फोटो अपलोड (OCR Scanning)</h2>
+        <p class="card-desc">केवल अधिकृत व्यवस्थापक (Admin) के लिए: Excel/Xerox शीट की फोटो से कर्मचारी नाम व संख्या ऑटोमैटिक स्कैन करें।</p>
+      </div>
+      <span class="role-pill role-admin"><i data-lucide="shield-check" style="width:12px;height:12px;display:inline"></i> Admin Access</span>
+    </div>
 
-<section class="card hidden" id="searchCard"><div class="row" style="align-items:center"><div><h2 style="margin:0">🔎 कर्मचारी रिपोर्ट खोजें</h2><p class="muted" style="margin:6px 0 0">तारीख चुनें और उस दिन के कर्मचारी व नंबर देखें।</p></div><div style="max-width:190px"><label>तारीख</label><input id="searchDate" type="date"></div></div>
-<button id="searchBtn">Search करें</button><button id="todayBtn" class="alt">आज</button><button id="csvBtn" class="alt">CSV डाउनलोड</button>
-<div id="searchMsg" class="status"></div><div id="report" class="hidden"><div class="stats"><div class="stat"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div><div class="stat"><span>कुल नंबर / रिकॉर्ड</span><strong id="totalCount">0</strong></div><div class="stat"><span>रिपोर्ट तारीख</span><strong id="reportDate" style="font-size:16px">—</strong></div></div>
-<div class="legend"><span style="background:#dcfce7;color:#166534">सबसे ज्यादा — Green</span><span style="background:#fef3c7;color:#92400e">बीच के नंबर — Yellow</span><span style="background:#fee2e2;color:#991b1b">सबसे कम — Red</span></div><div class="tablewrap"><table><thead><tr><th>क्रम</th><th>कर्मचारी का नाम</th><th class="num">नंबर</th></tr></thead><tbody id="reportBody"></tbody></table></div></div>
-</section>
-<section class="card hidden" id="historyCard"><h2>🗂️ उपलब्ध तारीखें</h2><p class="muted">पहले सेव की गई तारीखें यहाँ दिखेंगी। तारीख पर टैप करके रिपोर्ट खोलें।</p><div id="history" class="row"></div></section>
-<p class="muted" style="padding:0 4px 20px">नोट: OCR कभी-कभी नाम या नंबर गलत पढ़ सकता है। सेव करने से पहले जाँचें। ग्राहक/बैंक की गोपनीय फोटो अपलोड करने से पहले कार्यालय की अनुमति लें।</p>
+    <div class="row">
+      <div><label>रिपोर्ट तारीख</label><input id="uploadDate" type="date"></div>
+      <div><label>दस्तावेज़ / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*"></div>
+    </div>
+    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button id="readBtn"><i data-lucide="scan"></i> फोटो स्कैन करें (OCR)</button>
+    </div>
+    <div id="ocrMsg" class="status"></div>
+
+    <div id="previewBox" class="hidden" style="margin-top:20px; border-top:1px dashed var(--border); padding-top:16px;">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:10px;">डेटा सत्यापन व सुधार (Verification)</h3>
+      <div id="previewRows"></div>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="addRowBtn" class="alt sm"><i data-lucide="plus"></i> + कर्मचारी जोड़ें</button>
+        <button id="saveBtn"><i data-lucide="check-circle"></i> इस तारीख का डेटा सुरक्षित सेव करें</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. REPORT SEARCH & EXPORT -->
+  <section class="card hidden" id="searchCard">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title"><i data-lucide="search"></i> कर्मचारी रिपोर्ट खोजें</h2>
+        <p class="card-desc">तारीख चुनें और उस दिन का कर्मचारी वार विवरण देखें या डाउनलोड करें।</p>
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:8px;">
+        <div>
+          <label style="margin:0 0 4px;">तारीख</label>
+          <input id="searchDate" type="date" style="padding:8px 12px;">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      <button id="searchBtn"><i data-lucide="search"></i> रिपोर्ट देखें</button>
+      <button id="todayBtn" class="alt"><i data-lucide="calendar"></i> आज</button>
+      <button id="pdfBtn" class="alt" style="border-color:#cbd5e1; color:#0f172a;"><i data-lucide="file-text"></i> PDF डाउनलोड</button>
+      <button id="csvBtn" class="alt"><i data-lucide="download"></i> Excel / CSV</button>
+      <!-- Admin Only Delete Date Button -->
+      <button id="deleteDateBtn" class="danger hidden" style="margin-left:auto;"><i data-lucide="trash-2"></i> यह तारीख हटाएँ (Delete)</button>
+    </div>
+
+    <div id="searchMsg" class="status"></div>
+
+    <!-- Printable Report Container -->
+    <div id="pdfContent" class="hidden">
+      <!-- KPI Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span>कुल कर्मचारी (Employees)</span>
+          <strong id="totalEmployees">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>कुल योग (Total Count)</span>
+          <strong id="totalCount" style="color:var(--primary);">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>प्रति कर्मचारी औसत (Avg)</span>
+          <strong id="avgCount">0</strong>
+        </div>
+      </div>
+
+      <!-- Professional Clean Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px;">क्रम</th>
+              <th>कर्मचारी का नाम</th>
+              <th style="width:170px;">योगदान (% शेयर)</th>
+              <th class="num-col" style="width:120px;">नंबर / योग</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. SAVED DATES HISTORY -->
+  <section class="card hidden" id="historyCard">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title"><i data-lucide="archive"></i> उपलब्ध तारीखें (Archive)</h2>
+        <p class="card-desc">किसी भी तारीख पर क्लिक करके उस दिन की रिपोर्ट तुरंत देखें।</p>
+      </div>
+    </div>
+    <div id="historyChips" class="history-chips"></div>
+  </section>
 </main>
-<script>
-const SUPABASE_URL="https://nqiaizswmqhlwqtxgihu.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
-const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("PASTE_")&&!SUPABASE_ANON_KEY.includes("PASTE_");
-const $=id=>document.getElementById(id);let sb=null,user=null,preview=[],lastRows=[];
-function msg(id,s,good=false){$(id).textContent=s;$(id).className='status '+(good?'ok':'err')}
-function localDate(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
-function showApp(u){user=u;['uploadCard','searchCard','historyCard'].forEach(id=>$(id).classList.toggle('hidden',!u));$('setupCard').classList.toggle('hidden',!!u);if(u){$('uploadDate').value=localDate();$('searchDate').value=localDate();loadDates();searchReport();}}
-async function init(){if(!configured){msg('authMsg','सेटअप बाकी है: HTML में Supabase URL और key भरें।');return}if(!window.supabase){msg('authMsg','इंटरनेट/लाइब्रेरी लोड जाँचें।');return}sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data}=await sb.auth.getSession();showApp(data.session?.user||null);sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>showApp(s?.user||null),0))}
-async function auth(kind){if(!configured){msg('authMsg','पहले Supabase URL और key भरें।');return}let email=$('email').value.trim(),password=$('password').value;if(!email||password.length<6){msg('authMsg','ईमेल और कम-से-कम 6 अक्षर का पासवर्ड भरें।');return}let r=kind==='signup'?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});if(r.error)msg('authMsg',r.error.message);else msg('authMsg',kind==='signup'&&!r.data.session?'अकाउंट बना।':'लॉगिन सफल।',true)}
-$('loginBtn').onclick=()=>auth('login');$('signupBtn').onclick=()=>auth('signup');
-function addPreviewRow(name='',count=''){let div=document.createElement('div');div.className='editrow';let n=document.createElement('input');n.type='text';n.placeholder='कर्मचारी का नाम';n.value=name; n.className='empname';let c=document.createElement('input');c.type='number';c.min='0';c.step='1';c.placeholder='नंबर';c.value=count;c.className='empcount';let b=document.createElement('button');b.textContent='हटाएँ';b.className='alt';b.onclick=()=>div.remove();div.append(n,c,b);$('previewRows').appendChild(div)}$('addRowBtn').onclick=()=>addPreviewRow();
 
-function optimizeImage(file) {
+<script>
+// ==========================================
+// 1. SUPABASE व ADMIN CONFIGURATION
+// ==========================================
+const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+
+// केवल यह ईमेल एडमिन रहेगा और डेटा अपलोड/डिलीट कर सकेगा:
+const ADMIN_EMAILS = [
+  "mishranit102@gmail.com"
+];
+
+let sb = null, currentUser = null, isAdmin = false, lastRows = [];
+const $ = id => document.getElementById(id);
+
+function showStatus(id, text, isOk = false) {
+  const el = $(id);
+  if (!text) { el.className = 'status'; el.textContent = ''; return; }
+  el.textContent = text;
+  el.className = 'status active ' + (isOk ? 'ok' : 'err');
+}
+
+function getLocalDate() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+// ==========================================
+// 2. INITIALIZATION & AUTH STATE
+// ==========================================
+async function initApp() {
+  lucide.createIcons();
+  if (!window.supabase) {
+    showStatus('authMsg', 'Supabase लाइब्रेरी लोड नहीं हुई। कृपया इंटरनेट कनेक्शन जाँचें।');
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const { data: { session } } = await sb.auth.getSession();
+  handleAuthState(session?.user || null);
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    handleAuthState(session?.user || null);
+  });
+}
+
+function handleAuthState(user) {
+  currentUser = user;
+  if (user) {
+    isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
+
+    $('setupCard').classList.add('hidden');$('userHeaderSection').classList.remove('hidden');
+    $('searchCard').classList.remove('hidden');$('historyCard').classList.remove('hidden');
+
+    $('userEmailTxt').textContent = user.email;
+    const roleBadge = $('userRoleBadge');
+    if (isAdmin) {
+      roleBadge.textContent = "Admin";
+      roleBadge.className = "role-pill role-admin";
+      $('uploadCard').classList.remove('hidden');$('deleteDateBtn').classList.remove('hidden');
+    } else {
+      roleBadge.textContent = "Staff";
+      roleBadge.className = "role-pill role-viewer";
+      $('uploadCard').classList.add('hidden');$('deleteDateBtn').classList.add('hidden');
+    }
+
+    $('uploadDate').value = getLocalDate();$('searchDate').value = getLocalDate();
+
+    loadHistoryDates();
+    searchReport();
+  } else {
+    isAdmin = false;
+    $('setupCard').classList.remove('hidden');$('userHeaderSection').classList.add('hidden');
+    $('uploadCard').classList.add('hidden');$('searchCard').classList.add('hidden');
+    $('historyCard').classList.add('hidden');$('pdfContent').classList.add('hidden');
+  }
+  lucide.createIcons();
+}
+
+// Authentication Actions
+$('loginBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  if (!email || password.length < 6) {
+    showStatus('authMsg', 'कृपया सही ईमेल और कम से कम 6 अक्षरों का पासवर्ड दर्ज करें।');
+    return;
+  }
+  showStatus('authMsg', 'लॉगिन हो रहा है...', true);
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) showStatus('authMsg', error.message);
+};
+
+$('signupBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  if (!email || password.length < 6) {
+    showStatus('authMsg', 'कृपया सही ईमेल और कम से कम 6 अक्षरों का पासवर्ड दर्ज करें।');
+    return;
+  }
+  showStatus('authMsg', 'खाता बनाया जा रहा है...', true);
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) {
+    showStatus('authMsg', error.message);
+  } else if (!data.session) {
+    showStatus('authMsg', 'खाता बन गया है! यदि ईमेल सत्यापन चालू है तो इनबॉक्स चेक करें।', true);
+  }
+};
+
+$('logoutBtn').onclick = async () => {
+  await sb.auth.signOut();
+};
+
+// ==========================================
+// 3. OCR SCANNING (ADMIN ONLY)
+// ==========================================
+function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        let max = 1500;
+        const max = 1600;
         let w = img.width, h = img.height;
         if (w > max || h > max) {
           if (w > h) { h = Math.round((h * max) / w); w = max; }
@@ -75,7 +603,7 @@ function optimizeImage(file) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
       };
       img.onerror = () => resolve(file);
       img.src = e.target.result;
@@ -85,68 +613,240 @@ function optimizeImage(file) {
   });
 }
 
-$('readBtn').onclick=async()=>{
-  let f=$('imageFile').files[0];
-  if(!f){msg('ocrMsg','पहले फोटो चुनें।');return}
-  if(!f.type.startsWith('image/')){msg('ocrMsg','कृपया image फ़ाइल चुनें।');return}
-  if(!window.Tesseract){msg('ocrMsg','OCR लाइब्रेरी लोड नहीं हुई; इंटरनेट जाँचें।');return}
+function addPreviewRow(name = '', count = '') {
+  const div = document.createElement('div');
+  div.className = 'editrow';
 
-  $('readBtn').disabled=true;$('previewRows').innerHTML='';$('previewBox').classList.add('hidden');
-  msg('ocrMsg','फोटो तैयार की जा रही है…',true);
+  const n = document.createElement('input');
+  n.type = 'text';
+  n.placeholder = 'कर्मचारी का नाम';
+  n.value = name;
+  n.className = 'empname';
 
-  try{
-    const imgData = await optimizeImage(f);
-    msg('ocrMsg','फोटो पढ़ी जा रही है… कृपया प्रतीक्षा करें।',true);
+  const c = document.createElement('input');
+  c.type = 'number';
+  c.min = '0';
+  c.placeholder = 'नंबर';
+  c.value = count;
+  c.className = 'empcount';
+
+  const b = document.createElement('button');
+  b.innerHTML = '<i data-lucide="trash-2" style="width:14px;height:14px"></i>';
+  b.className = 'danger sm';
+  b.onclick = () => div.remove();
+
+  div.append(n, c, b);
+  $('previewRows').appendChild(div);
+  lucide.createIcons();
+}
+$('addRowBtn').onclick = () => addPreviewRow();
+
+$('readBtn').onclick = async () => {
+  if (!isAdmin) {
+    showStatus('ocrMsg', 'केवल एडमिन को डेटा प्रोसेस करने की अनुमति है।');
+    return;
+  }
+  const f = $('imageFile').files[0];
+  if (!f) { showStatus('ocrMsg', 'कृपया पहले फोटो चुनें।'); return; }
+  if (!f.type.startsWith('image/')) { showStatus('ocrMsg', 'केवल इमेज फाइल चुनें।'); return; }
+
+  $('readBtn').disabled = true;
+  $('previewRows').innerHTML = '';$('previewBox').classList.add('hidden');
+  showStatus('ocrMsg', 'फोटो प्रोसेस हो रही है...', true);
+
+  try {
+    const optimized = await compressImage(f);
+    showStatus('ocrMsg', 'OCR टेक्स्ट स्कैनिंग जारी है... कृपया प्रतीक्षा करें।', true);
 
     const worker = await Tesseract.createWorker('eng');
-    const ret = await worker.recognize(imgData);
+    const ret = await worker.recognize(optimized);
     await worker.terminate();
 
-    const text=ret.data.text||'';
-    const lines=text.split(/\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-    let found=[];
-    for(const line of lines){
-      let m=line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
-      if(m){let name=m[1].replace(/[|•·]+$/,'').trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}
+    const lines = (ret.data.text || '').split(/\n/).map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const found = [];
+
+    for (const line of lines) {
+      const m = line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
+      if (m) {
+        let name = m[1].replace(/[|•·\-_:]+$/g, '').trim();
+        if (name.length > 1 && !/select all|filter by|ascending|descending|search/i.test(name)) {
+          found.push({ name, count: Number(m[2]) });
+        }
+      }
     }
-    const dedup=new Map();found.forEach(x=>dedup.set(x.name+'|'+x.count,x));preview=[...dedup.values()];
-    if(!preview.length){
-      msg('ocrMsg','नाम और (नंबर) अपने-आप नहीं मिले। नीचे “कर्मचारी जोड़ें” से भरें।\nपहचाना गया टेक्स्ट:\n'+text.slice(0,300));
+
+    const dedup = new Map();
+    found.forEach(x => dedup.set(x.name.toLowerCase() + '|' + x.count, x));
+    const items = [...dedup.values()];
+
+    if (!items.length) {
+      showStatus('ocrMsg', 'ऑटोमैटिक नाम और (नंबर) नहीं मिल पाए। नीचे मैन्युअल कर्मचारी जोड़ें।');
       $('previewBox').classList.remove('hidden');
       return;
     }
-    preview.forEach(x=>addPreviewRow(x.name,x.count));
+
+    items.forEach(x => addPreviewRow(x.name, x.count));
     $('previewBox').classList.remove('hidden');
-    msg('ocrMsg',`${preview.length} कर्मचारी मिले। सेव करने से पहले जाँच लें।`,true);
-  }catch(e){
-    console.error(e);
-    msg('ocrMsg','फोटो पढ़ने में दिक्कत: ' + (e?.message || e?.toString() || 'अनजान त्रुटि'));
-  }finally{
-    $('readBtn').disabled=false;
+    showStatus('ocrMsg', `${items.length} कर्मचारी मिले। डेटा सत्यापित करके सेव करें।`, true);
+  } catch (err) {
+    showStatus('ocrMsg', 'स्कैनिंग त्रुटि: ' + (err?.message || err));
+  } finally {
+    $('readBtn').disabled = false;
   }
 };
 
-$('saveBtn').onclick=async()=>{let date=$('uploadDate').value;if(!date){msg('ocrMsg','तारीख चुनें।');return}let rows=[...$('previewRows').querySelectorAll('.editrow')].map(r=>({employee_name:r.querySelector('.empname').value.trim(),employee_count:Number(r.querySelector('.empcount').value)})).filter(r=>r.employee_name&&Number.isFinite(r.employee_count)&&r.employee_count>=0);
-if(!rows.length){msg('ocrMsg','कम-से-कम एक कर्मचारी और नंबर भरें।');return}
-$('saveBtn').disabled=true;try{
-const del=await sb.from('employee_daily_reports').delete().eq('user_id',user.id).eq('report_date',date);if(del.error)throw del.error;
-const payload=rows.map(r=>({...r,user_id:user.id,report_date:date}));
-const ins=await sb.from('employee_daily_reports').insert(payload);if(ins.error)throw ins.error;
-msg('ocrMsg',`${date} की ${rows.length} कर्मचारी एंट्री सेव हो गई।`,true);$('searchDate').value=date;await searchReport();await loadDates();
-}catch(e){msg('ocrMsg','डेटा सेव नहीं हुआ: '+e.message)}finally{$('saveBtn').disabled=false}};
+// Save Data (Admin Only)
+$('saveBtn').onclick = async () => {
+  if (!isAdmin) {
+    showStatus('ocrMsg', 'अनधिकृत: केवल एडमिन डेटा सेव कर सकता है।');
+    return;
+  }
+  const date = $('uploadDate').value;
+  if (!date) { showStatus('ocrMsg', 'तारीख का चयन करें।'); return; }
 
-async function searchReport(){if(!user||!sb)return;let date=$('searchDate').value;if(!date){msg('searchMsg','तारीख चुनें।');return}msg('searchMsg','डेटा खोजा जा रहा है…',true);$('report').classList.add('hidden');
-const r=await sb.from('employee_daily_reports').select('employee_name,employee_count,report_date').eq('report_date',date).order('employee_name',{ascending:true});
-if(r.error){msg('searchMsg','डेटा नहीं खुला: '+r.error.message);return}
-lastRows=r.data||[];if(!lastRows.length){msg('searchMsg','इस तारीख का डेटा नहीं मिला।');return}
-$('reportBody').innerHTML='';
-const counts=lastRows.map(x=>Number(x.employee_count)||0);
-const maxCount=Math.max(...counts),minCount=Math.min(...counts);
-let total=0;lastRows.forEach((x,i)=>{const count=Number(x.employee_count)||0;total+=count;let tr=document.createElement('tr');[i+1,x.employee_name,count].forEach((v,j)=>{let td=document.createElement('td');td.textContent=v;if(j===2){td.className='num';if(maxCount!==minCount&&count===maxCount)td.classList.add('rank-high');else if(maxCount!==minCount&&count===minCount)td.classList.add('rank-low');else if(maxCount!==minCount)td.classList.add('rank-mid');}tr.appendChild(td)});$('reportBody').appendChild(tr)});
-let totalRow=document.createElement('tr');totalRow.style.fontWeight='800';totalRow.style.background='#eaf1fb';let tdBlank=document.createElement('td');tdBlank.textContent='';let tdTotal=document.createElement('td');tdTotal.textContent='TOTAL ('+lastRows.length+' कर्मचारी)';let tdSum=document.createElement('td');tdSum.textContent=total;tdSum.className='num';tdSum.style.color='#123c69';totalRow.append(tdBlank,tdTotal,tdSum);$('reportBody').appendChild(totalRow);$('totalEmployees').textContent=lastRows.length;$('totalCount').textContent=total;$('reportDate').textContent=date;$('report').classList.remove('hidden');msg('searchMsg',`${lastRows.length} कर्मचारी मिले। कुल नंबर: ${total}`,true)}
+  const rows = [...$('previewRows').querySelectorAll('.editrow')].map(r => ({
+    employee_name: r.querySelector('.empname').value.trim(),
+    employee_count: Number(r.querySelector('.empcount').value)
+  })).filter(r => r.employee_name && Number.isFinite(r.employee_count) && r.employee_count >= 0);
 
-$('searchBtn').onclick=searchReport;$('todayBtn').onclick=()=>{$('searchDate').value=localDate();searchReport()};$('csvBtn').onclick=()=>{if(!lastRows.length){msg('searchMsg','पहले तारीख खोजें, फिर डाउनलोड करें।');return}let csv='Employee Name,Number,Date\r\n'+lastRows.map(r=>[r.employee_name,r.employee_count,r.report_date].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));a.download='employee-report-'+$('searchDate').value+'.csv';a.click();URL.revokeObjectURL(a.href)};
+  if (!rows.length) {
+    showStatus('ocrMsg', 'कम से कम एक कर्मचारी व मान्य संख्या दर्ज करें।');
+    return;
+  }
 
-async function loadDates(){if(!user||!sb)return;const r=await sb.from('employee_daily_reports').select('report_date').order('report_date',{ascending:false}).limit(1000);if(r.error){$('history').textContent='तारीखें लोड नहीं हुईं: '+r.error.message;return}let dates=[...new Set((r.data||[]).map(x=>x.report_date))];$('history').innerHTML='';if(!dates.length){$('history').textContent='अभी कोई तारीख सेव नहीं है।';return}dates.forEach(d=>{let b=document.createElement('button');b.className='alt';b.textContent=d;b.onclick=()=>{$('searchDate').value=d;searchReport();window.scrollTo({top:$('searchCard').offsetTop-10,behavior:'smooth'})};$('history').appendChild(b)})}
-init();
-</script></body></html>
+  $('saveBtn').disabled = true;
+  try {
+    // Delete existing date data
+    const del = await sb.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+
+    // Insert fresh records
+    const payload = rows.map(r => ({
+      ...r,
+      user_id: currentUser.id,
+      report_date: date
+    }));
+
+    const ins = await sb.from('employee_daily_reports').insert(payload);
+    if (ins.error) throw ins.error;
+
+    showStatus('ocrMsg', `${date} का डेटा सफलतापूर्वक सुरक्षित हो गया (${rows.length} रिकॉर्ड्स)।`, true);
+    $('searchDate').value = date;
+    await searchReport();
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('ocrMsg', 'डेटा सेव नहीं हुआ: ' + err.message);
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+};
+
+// ==========================================
+// 4. REPORT SEARCH & DISPLAY
+// ==========================================
+async function searchReport() {
+  if (!currentUser || !sb) return;
+  const date = $('searchDate').value;
+  if (!date) { showStatus('searchMsg', 'तारीख चुनें।'); return; }
+
+  showStatus('searchMsg', 'डेटा लोड हो रहा है...', true);
+  $('pdfContent').classList.add('hidden');
+
+  const { data, error } = await sb.from('employee_daily_reports')
+    .select('employee_name, employee_count, report_date')
+    .eq('report_date', date)
+    .order('employee_count', { ascending: false });
+
+  if (error) {
+    showStatus('searchMsg', 'त्रुटि: ' + error.message);
+    return;
+  }
+
+  lastRows = data || [];
+  if (!lastRows.length) {
+    showStatus('searchMsg', `तारीख ${date} का कोई रिकॉर्ड उपलब्ध नहीं है।`);
+    return;
+  }
+
+  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
+  const avg = (total / lastRows.length).toFixed(1);
+
+  $('totalEmployees').textContent = lastRows.length;
+  $('totalCount').textContent = total.toLocaleString('en-IN');$('avgCount').textContent = avg;
+
+  const tbody = $('reportBody');
+  tbody.innerHTML = '';
+
+  lastRows.forEach((r, idx) => {
+    const count = Number(r.employee_count) || 0;
+    const share = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="sno-pill">#${idx + 1}</span></td>
+      <td style="font-weight:600; font-size:14px; color:#0f172a;">${r.employee_name}</td>
+      <td>
+        <div style="font-size:12px; font-weight:600; color:#475569;">${share}%</div>
+        <div class="share-bar-wrap">
+          <div class="share-bar-fill" style="width:${share}%;"></div>
+        </div>
+      </td>
+      <td class="num-col">
+        <span class="count-badge">${count.toLocaleString('en-IN')}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Total summary footer row
+  const totalRow = document.createElement('tr');
+  totalRow.style.background = '#f8fafc';
+  totalRow.style.fontWeight = '700';
+  totalRow.innerHTML = `
+    <td></td>
+    <td style="color:#0f172a; text-transform:uppercase; font-size:13px; letter-spacing:0.5px;">कुल योग (Total - ${lastRows.length} कर्मचारी)</td>
+    <td style="font-size:13px; color:#475569;">100.0%</td>
+    <td class="num-col">
+      <span class="count-badge" style="background:#1e3a8a; color:#fff; border-color:#1e3a8a;">${total.toLocaleString('en-IN')}</span>
+    </td>
+  `;
+  tbody.appendChild(totalRow);
+
+  $('pdfContent').classList.remove('hidden');
+  showStatus('searchMsg', `तारीख ${date}: कुल ${lastRows.length} कर्मचारी, योग: ${total}`, true);
+  lucide.createIcons();
+}
+
+$('searchBtn').onclick = searchReport;
+$('todayBtn').onclick = () => {$('searchDate').value = getLocalDate(); searchReport(); };
+
+// ==========================================
+// 5. DELETE DATE DATA (ADMIN ONLY)
+// ==========================================
+$('deleteDateBtn').onclick = async () => {
+  if (!isAdmin) return;
+  const date = $('searchDate').value;
+  if (!date) return;
+
+  if (!confirm(`क्या आप वाकई तारीख ${date} का सम्पूर्ण डेटा डिलीट करना चाहते हैं?\nयह क्रिया वापस नहीं ली जा सकेगी!`)) {
+    return;
+  }
+
+  try {
+    const del = await sb.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+    showStatus('searchMsg', `तारीख ${date} का डेटा सफलतापूर्वक हटा दिया गया।`, true);
+    $('pdfContent').classList.add('hidden');
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('searchMsg', 'डिलीट करने में त्रुटि: ' + err.message);
+  }
+};
+
+// ==========================================
+// 6. EXPORTS: PDF & CSV
+// ==========================================
+$('pdfBtn').onclick = () => {
+  if (!lastRows.length) {
+    showStatus('searchMsg', 'कृपया पहले किसी तारीख की रिपोर्ट खोलें।');
+    return;
