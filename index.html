@@ -5,12 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f172a">
 <title>Employee Wise Daily Report Dashboard</title>
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Essential Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -27,10 +25,6 @@
   --text-muted: #64748b;
   --border: #e2e8f0;
   --danger: #ef4444;
-  --danger-bg: #fee2e2;
-  --success: #10b981;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 14px -2px rgba(15,23,42,0.08);
   --radius: 12px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,14 +33,12 @@ body {
   color: var(--text-main);
   font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
   line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
 }
 header {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
   color: #fff;
-  padding: 22px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  box-shadow: var(--shadow-md);
+  padding: 20px 16px;
+  box-shadow: 0 4px 14px rgba(15,23,42,0.1);
 }
 .header-container {
   max-width: 1080px;
@@ -55,28 +47,17 @@ header {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
 }
-.header-title h1 {
-  font-size: 22px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.header-title p {
-  color: #94a3b8;
-  font-size: 13px;
-  margin-top: 3px;
-}
+.header-title h1 { font-size: 20px; font-weight: 700; }
+.header-title p { color: #94a3b8; font-size: 13px; margin-top: 3px; }
 .user-badge {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.1);
   padding: 6px 14px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
   font-size: 13px;
 }
 .role-pill {
@@ -85,45 +66,31 @@ header {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 .role-admin { background: #ef4444; color: #fff; }
 .role-viewer { background: #3b82f6; color: #fff; }
 
-main { max-width: 1080px; margin: 24px auto; padding: 0 16px; }
+main { max-width: 1080px; margin: 20px auto; padding: 0 14px; }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 22px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
-  gap: 10px;
-}
-.card-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
+.card-title { font-size: 17px; font-weight: 700; }
 .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 6px;
-}
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 input[type=email], input[type=password], input[type=date], input[type=file], input[type=text], input[type=number] {
   width: 100%;
   padding: 11px 14px;
@@ -133,19 +100,14 @@ input[type=email], input[type=password], input[type=date], input[type=file], inp
   background: #fff;
   color: var(--text-main);
 }
-input:focus {
-  outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-}
-.row { display: flex; gap: 14px; flex-wrap: wrap; }
-.row > * { flex: 1; min-width: 200px; }
+input:focus { outline: none; border-color: var(--primary-light); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row > * { flex: 1; min-width: 180px; }
 
 button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
   font-size: 14px;
   font-weight: 600;
   padding: 11px 16px;
@@ -154,26 +116,17 @@ button {
   cursor: pointer;
   background: var(--primary);
   color: #fff;
-  transition: all .15s ease;
 }
-button:hover:not(:disabled) { background: #172554; }
-button:disabled { opacity: .6; cursor: not-allowed; }
-button.alt {
-  background: #f1f5f9;
-  color: var(--text-main);
-  border: 1px solid var(--border);
-}
-button.alt:hover:not(:disabled) { background: #e2e8f0; }
+button.alt { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
 button.danger { background: var(--danger); color: #fff; }
-button.danger:hover:not(:disabled) { background: #dc2626; }
 button.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+button:disabled { opacity: .6; cursor: not-allowed; }
 
 .status {
   font-size: 13px;
   margin-top: 14px;
   padding: 12px 14px;
   border-radius: 8px;
-  white-space: pre-wrap;
   display: none;
   font-weight: 600;
 }
@@ -181,138 +134,40 @@ button.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
 .status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 .status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
-/* KPI Cards */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
 }
 .stat-card {
   background: #ffffff;
   border: 1px solid var(--border);
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 10px;
   position: relative;
 }
-.stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: var(--primary-light);
-}
-.stat-card span {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--text-muted);
-}
-.stat-card strong {
-  display: block;
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-top: 4px;
-}
+.stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--primary-light); }
+.stat-card span { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+.stat-card strong { display: block; font-size: 24px; font-weight: 800; color: var(--text-main); margin-top: 4px; }
 
-/* Professional Table */
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #fff;
-}
-table { width: 100%; border-collapse: collapse; min-width: 520px; text-align: left; }
-th {
-  background: #f8fafc;
-  color: #475569;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .5px;
-  padding: 12px 16px;
-  border-bottom: 1.5px solid var(--border);
-}
-td {
-  padding: 13px 16px;
-  font-size: 14px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-main);
-}
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: #f8fafc; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+table { width: 100%; border-collapse: collapse; min-width: 500px; text-align: left; }
+th { background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 12px 14px; border-bottom: 1.5px solid var(--border); }
+td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border); }
 .num-col { text-align: right; }
 
 .sno-pill { font-size: 13px; font-weight: 600; color: var(--text-muted); }
-.count-badge {
-  display: inline-block;
-  background: #f1f5f9;
-  color: #1e293b;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-}
-
-.share-bar-wrap {
-  width: 100%;
-  max-width: 130px;
-  background: #e2e8f0;
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 4px;
-}
-.share-bar-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 999px;
-}
+.count-badge { display: inline-block; background: #f1f5f9; color: #1e293b; font-weight: 700; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
+.share-bar-wrap { width: 100%; max-width: 120px; background: #e2e8f0; height: 6px; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+.share-bar-fill { height: 100%; background: var(--accent); }
 
 #previewRows { display: grid; gap: 8px; margin-top: 14px; }
-.editrow {
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  gap: 10px;
-  align-items: center;
-  background: #f8fafc;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
+.editrow { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: center; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
 .history-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.chip {
-  background: #fff;
-  border: 1px solid var(--border);
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-main);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.chip:hover {
-  background: #eff6ff;
-  border-color: var(--primary-light);
-  color: var(--primary);
-}
-
+.chip { background: #fff; border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.chip:hover { background: #eff6ff; border-color: var(--primary-light); color: var(--primary); }
 .hidden { display: none !important; }
-#pdfContent { background: #fff; padding: 6px; border-radius: 8px; }
-
-@media (max-width: 640px) {
-  header { padding: 16px; }
-  .header-container { flex-direction: column; align-items: flex-start; }
-  .editrow { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr; }
-}
 </style>
 </head>
 <body>
@@ -327,14 +182,14 @@ tr:hover td { background: #f8fafc; }
       <div class="user-badge">
         <span id="userEmailTxt">user@domain.com</span>
         <span id="userRoleBadge" class="role-pill role-viewer">Staff</span>
-        <button id="logoutBtn" class="alt sm" title="लॉगआउट" onclick="doLogout()">🚪 लॉगआउट</button>
+        <button type="button" id="logoutBtn" class="alt sm" onclick="doLogout()">🚪 लॉगआउट</button>
       </div>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- 1. LOGIN / SIGNUP CARD -->
+  <!-- LOGIN CARD -->
   <section class="card" id="setupCard">
     <div class="card-header">
       <div>
@@ -343,22 +198,22 @@ tr:hover td { background: #f8fafc; }
       </div>
     </div>
     <div class="row">
-      <div><label>ईमेल (Email Address)</label><input id="email" type="email" placeholder="mishranit102@gmail.com" value="mishranit102@gmail.com"></div>
-      <div><label>पासवर्ड (Password)</label><input id="password" type="password" placeholder="कम से कम 6 अक्षर"></div>
+      <div><label>ईमेल (Email Address)</label><input id="email" type="email" value="mishranit102@gmail.com"></div>
+      <div><label>पासवर्ड (Password)</label><input id="password" type="password" placeholder="पासवर्ड लिखें"></div>
     </div>
     <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button id="loginBtn" onclick="doLogin()">➡️ लॉगिन करें</button>
-      <button id="signupBtn" class="alt" onclick="doSignup()">➕ नया खाता बनाएँ (Sign Up)</button>
+      <button type="button" id="loginBtn" onclick="doLogin(event)">➡️ लॉगिन करें</button>
+      <button type="button" id="signupBtn" class="alt" onclick="doSignup(event)">➕ नया खाता बनाएँ (Sign Up)</button>
     </div>
     <div id="authMsg" class="status"></div>
   </section>
 
-  <!-- 2. ADMIN ONLY: OCR UPLOAD CARD -->
+  <!-- ADMIN OCR UPLOAD -->
   <section class="card hidden" id="uploadCard">
     <div class="card-header">
       <div>
         <h2 class="card-title">📷 तारीख की फोटो अपलोड (OCR Scanning)</h2>
-        <p class="card-desc">केवल एडमिन के लिए: Excel/Xerox शीट की फोटो से कर्मचारी नाम व संख्या ऑटोमैटिक स्कैन करें।</p>
+        <p class="card-desc">केवल एडमिन के लिए: Xerox शीट की फोटो से कर्मचारी नाम व संख्या ऑटोमैटिक स्कैन करें।</p>
       </div>
       <span class="role-pill role-admin">Admin Access</span>
     </div>
@@ -367,23 +222,490 @@ tr:hover td { background: #f8fafc; }
       <div><label>रिपोर्ट तारीख</label><input id="uploadDate" type="date"></div>
       <div><label>दस्तावेज़ / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*"></div>
     </div>
-    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button id="readBtn" onclick="readImageOCR()">🔍 फोटो स्कैन करें (OCR)</button>
+    <div style="margin-top:14px;">
+      <button type="button" id="readBtn" onclick="readImageOCR()">🔍 फोटो स्कैन करें (OCR)</button>
     </div>
     <div id="ocrMsg" class="status"></div>
 
-    <div id="previewBox" class="hidden" style="margin-top:20px; border-top:1px dashed var(--border); padding-top:16px;">
-      <h3 style="font-size:15px; font-weight:700; margin-bottom:10px;">डेटा सत्यापन व सुधार (Verification)</h3>
+    <div id="previewBox" class="hidden" style="margin-top:18px; border-top:1px dashed var(--border); padding-top:14px;">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:8px;">डेटा सत्यापन व सुधार</h3>
       <div id="previewRows"></div>
       <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button id="addRowBtn" class="alt sm" onclick="addPreviewRow()">+ कर्मचारी जोड़ें</button>
-        <button id="saveBtn" onclick="saveReportData()">💾 इस तारीख का डेटा सुरक्षित सेव करें</button>
+        <button type="button" id="addRowBtn" class="alt sm" onclick="addPreviewRow()">+ कर्मचारी जोड़ें</button>
+        <button type="button" id="saveBtn" onclick="saveReportData()">💾 डेटा सेव करें</button>
       </div>
     </div>
   </section>
 
-  <!-- 3. REPORT SEARCH & EXPORT -->
+  <!-- SEARCH & REPORT -->
   <section class="card hidden" id="searchCard">
     <div class="card-header">
       <div>
-        <h2 class="card-title">
+        <h2 class="card-title">🔎 कर्मचारी रिपोर्ट खोजें</h2>
+        <p class="card-desc">तारीख चुनें और उस दिन का कर्मचारी वार विवरण देखें या डाउनलोड करें।</p>
+      </div>
+      <div style="max-width:180px;">
+        <label style="margin:0 0 4px;">तारीख</label>
+        <input id="searchDate" type="date" style="padding:8px 12px;">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      <button type="button" id="searchBtn" onclick="searchReport()">🔍 रिपोर्ट देखें</button>
+      <button type="button" id="todayBtn" class="alt" onclick="setTodayDate()">📅 आज</button>
+      <button type="button" id="pdfBtn" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button>
+      <button type="button" id="csvBtn" class="alt" onclick="exportCSV()">📊 Excel / CSV</button>
+      <button type="button" id="deleteDateBtn" class="danger hidden" style="margin-left:auto;" onclick="deleteCurrentDate()">🗑️ यह तारीख हटाएँ</button>
+    </div>
+
+    <div id="searchMsg" class="status"></div>
+
+    <div id="pdfContent" class="hidden">
+      <div class="stats-grid">
+        <div class="stat-card"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div>
+        <div class="stat-card"><span>कुल योग</span><strong id="totalCount" style="color:var(--primary);">0</strong></div>
+        <div class="stat-card"><span>प्रति कर्मचारी औसत</span><strong id="avgCount">0</strong></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:70px;">क्रम</th>
+              <th>कर्मचारी का नाम</th>
+              <th style="width:160px;">योगदान (% शेयर)</th>
+              <th class="num-col" style="width:110px;">नंबर</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY ARCHIVE -->
+  <section class="card hidden" id="historyCard">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">🗂️ उपलब्ध तारीखें (Archive)</h2>
+        <p class="card-desc">किसी भी तारीख पर क्लिक करके सीधे रिपोर्ट खोलें।</p>
+      </div>
+    </div>
+    <div id="historyChips" class="history-chips"></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+
+const ADMIN_EMAILS = [
+  "mishranit102@gmail.com"
+];
+
+let sb = null, currentUser = null, isAdmin = false, lastRows = [];
+const $ = id => document.getElementById(id);
+
+function showStatus(id, text, isOk = false) {
+  const el = $(id);
+  if (!text) { el.className = 'status'; el.textContent = ''; return; }
+  el.textContent = text;
+  el.className = 'status active ' + (isOk ? 'ok' : 'err');
+}
+
+function getLocalDate() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function getClient() {
+  if (!sb && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return sb;
+}
+
+async function doLogin(e) {
+  if (e) e.preventDefault();
+  const client = getClient();
+  if (!client) {
+    alert("Supabase कनेक्ट नहीं हुआ। इंटरनेट जाँचें।");
+    return;
+  }
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  if (!email || password.length < 6) {
+    showStatus('authMsg', 'कृपया वैध ईमेल और कम से कम 6 अक्षरों का पासवर्ड भरें।');
+    return;
+  }
+
+  $('loginBtn').disabled = true;
+  showStatus('authMsg', 'लॉगिन हो रहा है... कृपया प्रतीक्षा करें।', true);
+
+  try {
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message.includes("Invalid login credentials")) {
+        showStatus('authMsg', 'खाता नहीं मिला या पासवर्ड गलत है!\nयदि नया खाता है तो "नया खाता बनाएँ (Sign Up)" दबाएँ।');
+      } else {
+        showStatus('authMsg', 'लॉगिन त्रुटि: ' + error.message);
+      }
+    } else {
+      showStatus('authMsg', 'लॉगिन सफल!', true);
+      handleAuthState(data.user);
+    }
+  } catch (err) {
+    showStatus('authMsg', 'त्रुटि: ' + (err.message || err));
+  } finally {
+    $('loginBtn').disabled = false;
+  }
+}
+
+async function doSignup(e) {
+  if (e) e.preventDefault();
+  const client = getClient();
+  if (!client) return;
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  if (!email || password.length < 6) {
+    showStatus('authMsg', 'कम से कम 6 अक्षरों का पासवर्ड भरें।');
+    return;
+  }
+
+  $('signupBtn').disabled = true;
+  showStatus('authMsg', 'खाता बनाया जा रहा है...', true);
+
+  try {
+    const { data, error } = await client.auth.signUp({ email, password });
+    if (error) {
+      showStatus('authMsg', 'त्रुटि: ' + error.message);
+    } else if (data.user && !data.session) {
+      showStatus('authMsg', 'खाता बन गया! अपने Gmail (' + email + ') पर भेजा गया कन्फर्मेशन लिंक क्लिक करें, फिर लॉगिन करें।', true);
+    } else {
+      showStatus('authMsg', 'खाता बन गया और लॉगिन सफल!', true);
+      handleAuthState(data.user);
+    }
+  } catch (err) {
+    showStatus('authMsg', 'त्रुटि: ' + (err.message || err));
+  } finally {
+    $('signupBtn').disabled = false;
+  }
+}
+
+async function doLogout() {
+  const client = getClient();
+  if (client) await client.auth.signOut();
+  handleAuthState(null);
+}
+
+function handleAuthState(user) {
+  currentUser = user;
+  if (user) {
+    isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
+
+    $('setupCard').classList.add('hidden');
+    $('userHeaderSection').classList.remove('hidden');
+    $('searchCard').classList.remove('hidden');
+    $('historyCard').classList.remove('hidden');
+
+    $('userEmailTxt').textContent = user.email;
+    const roleBadge = $('userRoleBadge');
+    if (isAdmin) {
+      roleBadge.textContent = "Admin";
+      roleBadge.className = "role-pill role-admin";
+      $('uploadCard').classList.remove('hidden');
+      $('deleteDateBtn').classList.remove('hidden');
+    } else {
+      roleBadge.textContent = "Staff";
+      roleBadge.className = "role-pill role-viewer";
+      $('uploadCard').classList.add('hidden');
+      $('deleteDateBtn').classList.add('hidden');
+    }
+
+    $('uploadDate').value = getLocalDate();
+    $('searchDate').value = getLocalDate();
+
+    loadHistoryDates();
+    searchReport();
+  } else {
+    isAdmin = false;
+    $('setupCard').classList.remove('hidden');
+    $('userHeaderSection').classList.add('hidden');
+    $('uploadCard').classList.add('hidden');
+    $('searchCard').classList.add('hidden');
+    $('historyCard').classList.add('hidden');
+    $('pdfContent').classList.add('hidden');
+  }
+}
+
+// Fixed Mobile OCR Processing
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 1500;
+        let w = img.width, h = img.height;
+        if (w > max || h > max) {
+          if (w > h) { h = Math.round((h * max) / w); w = max; }
+          else { w = Math.round((w * max) / h); h = max; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        canvas.toBlob((blob) => {
+          resolve(blob || file);
+        }, 'image/jpeg', 0.85);
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+function addPreviewRow(name = '', count = '') {
+  const div = document.createElement('div');
+  div.className = 'editrow';
+
+  const n = document.createElement('input');
+  n.type = 'text';
+  n.placeholder = 'कर्मचारी का नाम';
+  n.value = name;
+  n.className = 'empname';
+
+  const c = document.createElement('input');
+  c.type = 'number';
+  c.min = '0';
+  c.placeholder = 'नंबर';
+  c.value = count;
+  c.className = 'empcount';
+
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = 'हटाएँ';
+  b.className = 'danger sm';
+  b.onclick = () => div.remove();
+
+  div.append(n, c, b);
+  $('previewRows').appendChild(div);
+}
+
+async function readImageOCR() {
+  if (!isAdmin) {
+    showStatus('ocrMsg', 'केवल एडमिन को डेटा प्रोसेस करने की अनुमति है।');
+    return;
+  }
+  const f = $('imageFile').files[0];
+  if (!f) { showStatus('ocrMsg', 'कृपया पहले फोटो चुनें।'); return; }
+
+  $('readBtn').disabled = true;
+  $('previewRows').innerHTML = '';
+  $('previewBox').classList.add('hidden');
+  showStatus('ocrMsg', 'फोटो तैयार की जा रही है...', true);
+
+  try {
+    const optimizedBlob = await compressImage(f);
+    showStatus('ocrMsg', 'OCR टेक्स्ट स्कैनिंग जारी है... कृपया प्रतीक्षा करें।', true);
+
+    const ret = await Tesseract.recognize(
+      optimizedBlob,
+      'eng',
+      {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            showStatus('ocrMsg', `स्कैनिंग प्रगति: ${Math.round((m.progress || 0) * 100)}%`, true);
+          }
+        }
+      }
+    );
+
+    const lines = (ret.data.text || '').split(/\n/).map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const found = [];
+
+    for (const line of lines) {
+      const m = line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
+      if (m) {
+        let name = m[1].replace(/[|•·\-_:]+$/g, '').trim();
+        if (name.length > 1 && !/select all|filter by|ascending|descending|search/i.test(name)) {
+          found.push({ name, count: Number(m[2]) });
+        }
+      }
+    }
+
+    const dedup = new Map();
+    found.forEach(x => dedup.set(x.name.toLowerCase() + '|' + x.count, x));
+    const items = [...dedup.values()];
+
+    if (!items.length) {
+      showStatus('ocrMsg', 'नाम और (नंबर) ऑटोमैटिक नहीं मिल पाए। नीचे "+ कर्मचारी जोड़ें" से भरें।');
+      $('previewBox').classList.remove('hidden');
+      return;
+    }
+
+    items.forEach(x => addPreviewRow(x.name, x.count));
+    $('previewBox').classList.remove('hidden');
+    showStatus('ocrMsg', `${items.length} कर्मचारी मिले। डेटा जाँचकर सेव करें।`, true);
+  } catch (err) {
+    showStatus('ocrMsg', 'स्कैनिंग त्रुटि: ' + (err?.message || err));
+  } finally {
+    $('readBtn').disabled = false;
+  }
+}
+
+async function saveReportData() {
+  if (!isAdmin) return;
+  const client = getClient();
+  const date = $('uploadDate').value;
+  if (!date) { showStatus('ocrMsg', 'तारीख का चयन करें।'); return; }
+
+  const rows = [...$('previewRows').querySelectorAll('.editrow')].map(r => ({
+    employee_name: r.querySelector('.empname').value.trim(),
+    employee_count: Number(r.querySelector('.empcount').value)
+  })).filter(r => r.employee_name && Number.isFinite(r.employee_count) && r.employee_count >= 0);
+
+  if (!rows.length) {
+    showStatus('ocrMsg', 'कम से कम एक कर्मचारी व मान्य संख्या दर्ज करें।');
+    return;
+  }
+
+  $('saveBtn').disabled = true;
+  try {
+    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+
+    const payload = rows.map(r => ({
+      ...r,
+      user_id: currentUser.id,
+      report_date: date
+    }));
+
+    const ins = await client.from('employee_daily_reports').insert(payload);
+    if (ins.error) throw ins.error;
+
+    showStatus('ocrMsg', `${date} का डेटा सुरक्षित सेव हो गया (${rows.length} रिकॉर्ड्स)।`, true);
+    $('searchDate').value = date;
+    await searchReport();
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('ocrMsg', 'डेटा सेव नहीं हुआ: ' + err.message);
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+}
+
+async function searchReport() {
+  const client = getClient();
+  if (!currentUser || !client) return;
+  const date = $('searchDate').value;
+  if (!date) { showStatus('searchMsg', 'तारीख चुनें।'); return; }
+
+  showStatus('searchMsg', 'डेटा लोड हो रहा है...', true);
+  $('pdfContent').classList.add('hidden');
+
+  const { data, error } = await client.from('employee_daily_reports')
+    .select('employee_name, employee_count, report_date')
+    .eq('report_date', date)
+    .order('employee_count', { ascending: false });
+
+  if (error) {
+    showStatus('searchMsg', 'त्रुटि: ' + error.message);
+    return;
+  }
+
+  lastRows = data || [];
+  if (!lastRows.length) {
+    showStatus('searchMsg', `तारीख ${date} का कोई रिकॉर्ड उपलब्ध नहीं है।`);
+    return;
+  }
+
+  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
+  const avg = (total / lastRows.length).toFixed(1);
+
+  $('totalEmployees').textContent = lastRows.length;
+  $('totalCount').textContent = total.toLocaleString('en-IN');
+  $('avgCount').textContent = avg;
+
+  const tbody = $('reportBody');
+  tbody.innerHTML = '';
+
+  lastRows.forEach((r, idx) => {
+    const count = Number(r.employee_count) || 0;
+    const share = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="sno-pill">#${idx + 1}</span></td>
+      <td style="font-weight:600; font-size:14px; color:#0f172a;">${r.employee_name}</td>
+      <td>
+        <div style="font-size:12px; font-weight:600; color:#475569;">${share}%</div>
+        <div class="share-bar-wrap">
+          <div class="share-bar-fill" style="width:${share}%;"></div>
+        </div>
+      </td>
+      <td class="num-col">
+        <span class="count-badge">${count.toLocaleString('en-IN')}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const totalRow = document.createElement('tr');
+  totalRow.style.background = '#f8fafc';
+  totalRow.style.fontWeight = '700';
+  totalRow.innerHTML = `
+    <td></td>
+    <td style="color:#0f172a; text-transform:uppercase; font-size:13px; letter-spacing:0.5px;">कुल योग (${lastRows.length} कर्मचारी)</td>
+    <td style="font-size:13px; color:#475569;">100.0%</td>
+    <td class="num-col">
+      <span class="count-badge" style="background:#1e3a8a; color:#fff; border-color:#1e3a8a;">${total.toLocaleString('en-IN')}</span>
+    </td>
+  `;
+  tbody.appendChild(totalRow);
+
+  $('pdfContent').classList.remove('hidden');
+  showStatus('searchMsg', `तारीख ${date}: कुल ${lastRows.length} कर्मचारी, योग: ${total}`, true);
+}
+
+function setTodayDate() {
+  $('searchDate').value = getLocalDate();
+  searchReport();
+}
+
+async function deleteCurrentDate() {
+  if (!isAdmin) return;
+  const client = getClient();
+  const date = $('searchDate').value;
+  if (!date) return;
+
+  if (!confirm(`क्या आप तारीख ${date} का सम्पूर्ण डेटा डिलीट करना चाहते हैं?`)) return;
+
+  try {
+    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+    showStatus('searchMsg', `तारीख ${date} का डेटा हटा दिया गया।`, true);
+    $('pdfContent').classList.add('hidden');
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('searchMsg', 'डिलीट करने में त्रुटि: ' + err.message);
+  }
+}
+
+function exportPDF() {
+  if (!lastRows.length) {
+    showStatus('searchMsg', 'पहले किसी तारीख की रिपोर्ट खोलें।');
+    return;
+  }
+  const date = $('searchDate').value;
+  const element = $('pdfContent');
+
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: `Employee_Report_${date}.pdf
