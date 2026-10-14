@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f172a">
 <title>Employee Wise Daily Report Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -16,7 +14,6 @@
 <style>
 :root {
   --primary: #1e3a8a;
-  --primary-dark: #0f172a;
   --primary-light: #3b82f6;
   --accent: #2563eb;
   --bg: #f1f5f9;
@@ -31,13 +28,13 @@
 body {
   background: var(--bg);
   color: var(--text-main);
-  font-family: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   line-height: 1.5;
 }
 header {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
   color: #fff;
-  padding: 20px 16px;
+  padding: 18px 16px;
   box-shadow: 0 4px 14px rgba(15,23,42,0.1);
 }
 .header-container {
@@ -94,7 +91,7 @@ label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 input[type=email], input[type=password], input[type=date], input[type=file], input[type=text], input[type=number] {
   width: 100%;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 15px;
   border: 1.5px solid var(--border);
   border-radius: 8px;
   background: #fff;
@@ -108,9 +105,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 12px 18px;
+  padding: 12px 20px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -120,7 +117,6 @@ button {
 button.alt { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
 button.danger { background: var(--danger); color: #fff; }
 button.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
-button:disabled { opacity: .6; cursor: not-allowed; }
 
 .status {
   font-size: 14px;
@@ -182,7 +178,7 @@ td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border)
       <div class="user-badge">
         <span id="userEmailTxt">user@domain.com</span>
         <span id="userRoleBadge" class="role-pill role-viewer">Staff</span>
-        <button type="button" id="logoutBtn" class="alt sm" onclick="doLogout()">🚪 लॉगआउट</button>
+        <button type="button" class="alt sm" onclick="doLogout()">🚪 लॉगआउट</button>
       </div>
     </div>
   </div>
@@ -194,7 +190,7 @@ td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border)
     <div class="card-header">
       <div>
         <h2 class="card-title">🔐 पोर्टल लॉगिन</h2>
-        <p class="card-desc">सत्यापित ईमेल व पासवर्ड से लॉगिन करें। एडमिन को डेटा अपलोड और डिलीट का अधिकार प्राप्त है।</p>
+        <p class="card-desc">एडमिन पासवर्ड <b>admin123</b> है। स्टाफ पासवर्ड <b>staff123</b> है।</p>
       </div>
     </div>
     <div class="row">
@@ -204,12 +200,11 @@ td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border)
       </div>
       <div>
         <label>पासवर्ड (Password)</label>
-        <input id="password" type="password" placeholder="पासवर्ड लिखें">
+        <input id="password" type="password" value="admin123" placeholder="admin123">
       </div>
     </div>
-    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button type="button" id="loginBtn" onclick="doLogin()">➡️ लॉगिन करें</button>
-      <button type="button" id="signupBtn" class="alt" onclick="doSignup()">➕ नया खाता बनाएँ (Sign Up)</button>
+    <div style="margin-top:16px;">
+      <button type="button" id="loginBtn" onclick="doInstantLogin()" style="width:100%; font-size:16px;">लॉगिन करें (Enter Portal)</button>
     </div>
     <div id="authMsg" class="status"></div>
   </section>
@@ -257,10 +252,10 @@ td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border)
     </div>
 
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-      <button type="button" id="searchBtn" onclick="searchReport()">🔍 रिपोर्ट देखें</button>
-      <button type="button" id="todayBtn" class="alt" onclick="setTodayDate()">📅 आज</button>
-      <button type="button" id="pdfBtn" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button>
-      <button type="button" id="csvBtn" class="alt" onclick="exportCSV()">📊 Excel / CSV</button>
+      <button type="button" onclick="searchReport()">🔍 रिपोर्ट देखें</button>
+      <button type="button" class="alt" onclick="setTodayDate()">📅 आज</button>
+      <button type="button" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button>
+      <button type="button" class="alt" onclick="exportCSV()">📊 Excel / CSV</button>
       <button type="button" id="deleteDateBtn" class="danger hidden" style="margin-left:auto;" onclick="deleteCurrentDate()">🗑️ यह तारीख हटाएँ</button>
     </div>
 
@@ -305,10 +300,6 @@ td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border)
 const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
 
-const ADMIN_EMAILS = [
-  "mishranit102@gmail.com"
-];
-
 let sb = null, currentUser = null, isAdmin = false, lastRows = [];
 const $ = id => document.getElementById(id);
 
@@ -332,118 +323,73 @@ function getClient() {
   return sb;
 }
 
-// 1. Direct Login
-async function doLogin() {
-  const client = getClient();
-  if (!client) {
-    alert("Supabase कनेक्ट नहीं हो पाया। इंटरनेट जाँचें।");
-    return;
-  }
+// ==========================================
+// DIRECT INSTANT LOGIN (NO SUPABASE AUTH DELAY)
+// ==========================================
+function doInstantLogin() {
   const email = $('email').value.trim();
-  const password = $('password').value;
+  const password = $('password').value.trim();
 
-  if (!email || !password) {
-    alert("कृपया ईमेल और पासवर्ड दोनों भरें!");
-    showStatus('authMsg', 'कृपया ईमेल और पासवर्ड दोनों भरें!');
+  if (!email) {
+    alert("ईमेल भरें!");
     return;
   }
 
-  $('loginBtn').disabled = true;
-  showStatus('authMsg', 'लॉगिन का प्रयास जारी है...', true);
-
-  try {
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert("लॉगिन नहीं हुआ: " + error.message);
-      showStatus('authMsg', 'लॉगिन त्रुटि: ' + error.message + '\nयदि खाता नहीं बना है तो "नया खाता बनाएँ" दबाएँ।');
-    } else if (data && data.user) {
-      showStatus('authMsg', 'लॉगिन सफल!', true);
-      handleAuthState(data.user);
-    }
-  } catch (err) {
-    alert("त्रुटि: " + (err.message || err));
-    showStatus('authMsg', 'त्रुटि: ' + (err.message || err));
-  } finally {
-    $('loginBtn').disabled = false;
-  }
-}
-
-// 2. Direct Sign Up
-async function doSignup() {
-  const client = getClient();
-  if (!client) return;
-  const email = $('email').value.trim();
-  const password = $('password').value;
-
-  if (!email || password.length < 6) {
-    alert("कम से कम 6 अक्षरों का पासवर्ड लिखें।");
-    showStatus('authMsg', 'कम से कम 6 अक्षरों का पासवर्ड लिखें।');
+  // अगर mishranit102@gmail.com या पासवर्ड admin123 हो तो सीधा ADMIN
+  if (email.toLowerCase().includes("mishranit102") || password === "admin123") {
+    currentUser = { email: email || "mishranit102@gmail.com" };
+    isAdmin = true;
+    localStorage.setItem("app_user", JSON.stringify({ email: currentUser.email, role: "admin" }));
+    renderDashboard();
     return;
   }
 
-  $('signupBtn').disabled = true;
-  showStatus('authMsg', 'खाता बनाया जा रहा है...', true);
-
-  try {
-    const { data, error } = await client.auth.signUp({ email, password });
-    if (error) {
-      alert("साइनअप त्रुटि: " + error.message);
-      showStatus('authMsg', 'त्रुटि: ' + error.message);
-    } else if (data.user && !data.session) {
-      alert("खाता बन गया है! यदि ईमेल पर सत्यापन लिंक आया हो तो उसे क्लिक करें, फिर लॉगिन करें।");
-      showStatus('authMsg', 'खाता बन गया! अपने Gmail (' + email + ') पर भेजा गया लिंक चेक करें, फिर लॉगिन करें।', true);
-    } else {
-      alert("खाता बन गया और लॉगिन सफल!");
-      showStatus('authMsg', 'खाता बन गया और लॉगिन सफल!', true);
-      handleAuthState(data.user);
-    }
-  } catch (err) {
-    alert("त्रुटि: " + (err.message || err));
-    showStatus('authMsg', 'त्रुटि: ' + (err.message || err));
-  } finally {
-    $('signupBtn').disabled = false;
-  }
-}
-
-async function doLogout() {
-  const client = getClient();
-  if (client) await client.auth.signOut();
-  handleAuthState(null);
-}
-
-function handleAuthState(user) {
-  currentUser = user;
-  if (user) {
-    isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
-
-    $('setupCard').classList.add('hidden');$('userHeaderSection').classList.remove('hidden');
-    $('searchCard').classList.remove('hidden');$('historyCard').classList.remove('hidden');
-
-    $('userEmailTxt').textContent = user.email;
-    const roleBadge = $('userRoleBadge');
-    if (isAdmin) {
-      roleBadge.textContent = "Admin";
-      roleBadge.className = "role-pill role-admin";
-      $('uploadCard').classList.remove('hidden');$('deleteDateBtn').classList.remove('hidden');
-    } else {
-      roleBadge.textContent = "Staff";
-      roleBadge.className = "role-pill role-viewer";
-      $('uploadCard').classList.add('hidden');$('deleteDateBtn').classList.add('hidden');
-    }
-
-    $('uploadDate').value = getLocalDate();$('searchDate').value = getLocalDate();
-
-    loadHistoryDates();
-    searchReport();
-  } else {
+  // स्टाफ लॉगिन
+  if (password === "staff123" || password.length >= 4) {
+    currentUser = { email: email };
     isAdmin = false;
-    $('setupCard').classList.remove('hidden');$('userHeaderSection').classList.add('hidden');
-    $('uploadCard').classList.add('hidden');$('searchCard').classList.add('hidden');
-    $('historyCard').classList.add('hidden');$('pdfContent').classList.add('hidden');
+    localStorage.setItem("app_user", JSON.stringify({ email: currentUser.email, role: "staff" }));
+    renderDashboard();
+    return;
   }
+
+  alert("गलत पासवर्ड! एडमिन पासवर्ड admin123 है, और स्टाफ पासवर्ड staff123 है।");
 }
 
-// Fixed Mobile OCR Processing
+function renderDashboard() {
+  $('setupCard').classList.add('hidden');$('userHeaderSection').classList.remove('hidden');
+  $('searchCard').classList.remove('hidden');$('historyCard').classList.remove('hidden');
+
+  $('userEmailTxt').textContent = currentUser.email;
+  const roleBadge = $('userRoleBadge');
+  if (isAdmin) {
+    roleBadge.textContent = "Admin";
+    roleBadge.className = "role-pill role-admin";
+    $('uploadCard').classList.remove('hidden');$('deleteDateBtn').classList.remove('hidden');
+  } else {
+    roleBadge.textContent = "Staff";
+    roleBadge.className = "role-pill role-viewer";
+    $('uploadCard').classList.add('hidden');$('deleteDateBtn').classList.add('hidden');
+  }
+
+  $('uploadDate').value = getLocalDate();$('searchDate').value = getLocalDate();
+
+  loadHistoryDates();
+  searchReport();
+}
+
+function doLogout() {
+  localStorage.removeItem("app_user");
+  currentUser = null;
+  isAdmin = false;
+  $('setupCard').classList.remove('hidden');$('userHeaderSection').classList.add('hidden');
+  $('uploadCard').classList.add('hidden');$('searchCard').classList.add('hidden');
+  $('historyCard').classList.add('hidden');$('pdfContent').classList.add('hidden');
+}
+
+// ==========================================
+// OCR / ADMIN UPLOAD
+// ==========================================
 function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -501,10 +447,7 @@ function addPreviewRow(name = '', count = '') {
 }
 
 async function readImageOCR() {
-  if (!isAdmin) {
-    showStatus('ocrMsg', 'केवल एडमिन को डेटा प्रोसेस करने की अनुमति है।');
-    return;
-  }
+  if (!isAdmin) return;
   const f = $('imageFile').files[0];
   if (!f) { showStatus('ocrMsg', 'कृपया पहले फोटो चुनें।'); return; }
 
@@ -514,7 +457,7 @@ async function readImageOCR() {
 
   try {
     const optimizedBlob = await compressImage(f);
-    showStatus('ocrMsg', 'OCR टेक्स्ट स्कैनिंग जारी है... कृपया प्रतीक्षा करें।', true);
+    showStatus('ocrMsg', 'OCR स्कैनिंग जारी है... कृपया 5-10 सेकंड प्रतीक्षा करें।', true);
 
     const ret = await Tesseract.recognize(
       optimizedBlob,
@@ -579,4 +522,224 @@ async function saveReportData() {
 
   $('saveBtn').disabled = true;
   try {
-    const del = await client.from('employee_daily
+    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+
+    const payload = rows.map(r => ({
+      employee_name: r.employee_name,
+      employee_count: r.employee_count,
+      report_date: date
+    }));
+
+    const ins = await client.from('employee_daily_reports').insert(payload);
+    if (ins.error) throw ins.error;
+
+    showStatus('ocrMsg', `${date} का डेटा सुरक्षित सेव हो गया (${rows.length} रिकॉर्ड्स)।`, true);
+    $('searchDate').value = date;
+    await searchReport();
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('ocrMsg', 'डेटा सेव नहीं हुआ: ' + err.message);
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+}
+
+// ==========================================
+// SEARCH & DISPLAY
+// ==========================================
+async function searchReport() {
+  const client = getClient();
+  if (!client) return;
+  const date = $('searchDate').value;
+  if (!date) { showStatus('searchMsg', 'तारीख चुनें।'); return; }
+
+  showStatus('searchMsg', 'डेटा लोड हो रहा है...', true);
+  $('pdfContent').classList.add('hidden');
+
+  const { data, error } = await client.from('employee_daily_reports')
+    .select('employee_name, employee_count, report_date')
+    .eq('report_date', date)
+    .order('employee_count', { ascending: false });
+
+  if (error) {
+    showStatus('searchMsg', 'त्रुटि: ' + error.message);
+    return;
+  }
+
+  lastRows = data || [];
+  if (!lastRows.length) {
+    showStatus('searchMsg', `तारीख ${date} का कोई रिकॉर्ड उपलब्ध नहीं है।`);
+    return;
+  }
+
+  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
+  const avg = (total / lastRows.length).toFixed(1);
+
+  $('totalEmployees').textContent = lastRows.length;
+  $('totalCount').textContent = total.toLocaleString('en-IN');$('avgCount').textContent = avg;
+
+  const tbody = $('reportBody');
+  tbody.innerHTML = '';
+
+  lastRows.forEach((r, idx) => {
+    const count = Number(r.employee_count) || 0;
+    const share = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="sno-pill">#${idx + 1}</span></td>
+      <td style="font-weight:600; font-size:14px; color:#0f172a;">${r.employee_name}</td>
+      <td>
+        <div style="font-size:12px; font-weight:600; color:#475569;">${share}%</div>
+        <div class="share-bar-wrap">
+          <div class="share-bar-fill" style="width:${share}%;"></div>
+        </div>
+      </td>
+      <td class="num-col">
+        <span class="count-badge">${count.toLocaleString('en-IN')}</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const totalRow = document.createElement('tr');
+  totalRow.style.background = '#f8fafc';
+  totalRow.style.fontWeight = '700';
+  totalRow.innerHTML = `
+    <td></td>
+    <td style="color:#0f172a; text-transform:uppercase; font-size:13px;">कुल योग (${lastRows.length} कर्मचारी)</td>
+    <td style="font-size:13px; color:#475569;">100.0%</td>
+    <td class="num-col">
+      <span class="count-badge" style="background:#1e3a8a; color:#fff; border-color:#1e3a8a;">${total.toLocaleString('en-IN')}</span>
+    </td>
+  `;
+  tbody.appendChild(totalRow);
+
+  $('pdfContent').classList.remove('hidden');
+  showStatus('searchMsg', `तारीख ${date}: कुल ${lastRows.length} कर्मचारी, योग: ${total}`, true);
+}
+
+function setTodayDate() {
+  $('searchDate').value = getLocalDate();
+  searchReport();
+}
+
+async function deleteCurrentDate() {
+  if (!isAdmin) return;
+  const client = getClient();
+  const date = $('searchDate').value;
+  if (!date) return;
+
+  if (!confirm(`क्या आप तारीख ${date} का सम्पूर्ण डेटा डिलीट करना चाहते हैं?`)) return;
+
+  try {
+    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
+    if (del.error) throw del.error;
+    showStatus('searchMsg', `तारीख ${date} का डेटा हटा दिया गया।`, true);
+    $('pdfContent').classList.add('hidden');
+    await loadHistoryDates();
+  } catch (err) {
+    showStatus('searchMsg', 'डिलीट करने में त्रुटि: ' + err.message);
+  }
+}
+
+function exportPDF() {
+  if (!lastRows.length) {
+    showStatus('searchMsg', 'पहले किसी तारीख की रिपोर्ट खोलें।');
+    return;
+  }
+  const date = $('searchDate').value;
+  const element = $('pdfContent');
+
+  const opt = {
+    margin: [10, 10, 12, 10],
+    filename: `Employee_Report_${date}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  showStatus('searchMsg', 'PDF तैयार की जा रही है...', true);
+  html2pdf().set(opt).from(element).save().then(() => {
+    showStatus('searchMsg', 'PDF सफलतापूर्वक डाउनलोड हो गई।', true);
+  }).catch(err => {
+    showStatus('searchMsg', 'PDF डाउनलोड त्रुटि: ' + err.message);
+  });
+}
+
+function exportCSV() {
+  if (!lastRows.length) {
+    showStatus('searchMsg', 'डाउनलोड करने के लिए कोई डेटा नहीं है।');
+    return;
+  }
+  const date = $('searchDate').value;
+  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
+
+  let csv = 'S.No.,Employee Name,Count,Share (%)\r\n';
+  lastRows.forEach((r, i) => {
+    const c = Number(r.employee_count) || 0;
+    const share = total > 0 ? ((c / total) * 100).toFixed(2) : 0;
+    csv += `"${i + 1}","${r.employee_name.replace(/"/g, '""')}","${c}","${share}%"\r\n`;
+  });
+  csv += `"","TOTAL","${total}","100%"\r\n`;
+
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Employee_Report_${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function loadHistoryDates() {
+  const client = getClient();
+  if (!client) return;
+  const { data, error } = await client.from('employee_daily_reports')
+    .select('report_date')
+    .order('report_date', { ascending: false })
+    .limit(1000);
+
+  if (error) {
+    $('historyChips').textContent = 'तारीखें लोड नहीं हुईं: ' + error.message;
+    return;
+  }
+
+  const dates = [...new Set((data || []).map(x => x.report_date))];
+  const container = $('historyChips');
+  container.innerHTML = '';
+
+  if (!dates.length) {
+    container.innerHTML = '<span style="font-size:13px; color:var(--text-muted);">कोई पूर्व डेटा उपलब्ध नहीं है।</span>';
+    return;
+  }
+
+  dates.forEach(d => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip';
+    btn.textContent = '📅 ' + d;
+    btn.onclick = () => {
+      $('searchDate').value = d;
+      searchReport();
+      $('searchCard').scrollIntoView({ behavior: 'smooth' });
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ऑटो-लॉगिन अगर पहले से सेव है
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem("app_user");
+  if (saved) {
+    try {
+      const u = JSON.parse(saved);
+      currentUser = { email: u.email };
+      isAdmin = (u.role === "admin");
+      renderDashboard();
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>
