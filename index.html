@@ -4,994 +4,213 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f172a">
-<title>Employee Wise Daily Report Dashboard</title>
-
-<!-- Libraries -->
+<title>Employee Daily Performance Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
 <style>
-:root {
-  --primary: #1e3a8a;
-  --primary-light: #3b82f6;
-  --accent: #2563eb;
-  --bg: #f1f5f9;
-  --surface: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --danger: #ef4444;
-  --radius: 12px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  line-height: 1.5;
-}
-header {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-  color: #fff;
-  padding: 18px 16px;
-  box-shadow: 0 4px 14px rgba(15,23,42,0.1);
-}
-.header-container {
-  max-width: 1080px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.header-title h1 { font-size: 20px; font-weight: 700; }
-.header-title p { color: #94a3b8; font-size: 13px; margin-top: 3px; }
-.user-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,0.1);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-}
-.role-pill {
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.role-admin { background: #ef4444; color: #fff; }
-.role-viewer { background: #3b82f6; color: #fff; }
-
-main { max-width: 1080px; margin: 20px auto; padding: 0 14px; }
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-}
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.card-title { font-size: 17px; font-weight: 700; }
-.card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-
-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-input[type=email], input[type=password], input[type=date], input[type=file], input[type=text], input[type=number] {
-  width: 100%;
-  padding: 12px 14px;
-  font-size: 15px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-main);
-}
-input:focus { outline: none; border-color: var(--primary-light); }
-.row { display: flex; gap: 12px; flex-wrap: wrap; }
-.row > * { flex: 1; min-width: 180px; }
-
-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  background: var(--primary);
-  color: #fff;
-}
-button.alt { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
-button.danger { background: var(--danger); color: #fff; }
-button.sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
-
-.status {
-  font-size: 14px;
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  display: none;
-  font-weight: 600;
-}
-.status.active { display: block; }
-.status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-.status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.stat-card {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  padding: 14px 16px;
-  border-radius: 10px;
-  position: relative;
-}
-.stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--primary-light); }
-.stat-card span { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
-.stat-card strong { display: block; font-size: 24px; font-weight: 800; color: var(--text-main); margin-top: 4px; }
-
-.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
-table { width: 100%; border-collapse: collapse; min-width: 500px; text-align: left; }
-th { background: #f8fafc; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; padding: 12px 14px; border-bottom: 1.5px solid var(--border); }
-td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid var(--border); }
-.num-col { text-align: right; }
-
-.sno-pill { font-size: 13px; font-weight: 600; color: var(--text-muted); }
-.count-badge { display: inline-block; background: #f1f5f9; color: #1e293b; font-weight: 700; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
-.share-bar-wrap { width: 100%; max-width: 120px; background: #e2e8f0; height: 6px; border-radius: 999px; overflow: hidden; margin-top: 4px; }
-.share-bar-fill { height: 100%; background: var(--accent); }
-
-#previewRows { display: grid; gap: 8px; margin-top: 14px; }
-.editrow { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: center; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
-.history-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.chip { background: #fff; border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.chip:hover { background: #eff6ff; border-color: var(--primary-light); color: var(--primary); }
-.hidden { display: none !important; }
+:root{--primary:#1e3a8a;--blue:#3b82f6;--bg:#f1f5f9;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--danger:#b91c1c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Devanagari",sans-serif;line-height:1.5}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:18px 16px}
+.header-container{max-width:1080px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:20px}header p{color:#cbd5e1;font-size:13px;margin-top:4px}
+main{max-width:1080px;margin:20px auto;padding:0 14px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 1px 4px #0000000a}
+.card-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.card-title{font-size:17px;font-weight:700}.card-desc{font-size:13px;color:var(--muted);margin-top:3px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+input[type=email],input[type=password],input[type=date],input[type=file],input[type=text],input[type=number]{width:100%;min-width:0;padding:11px 12px;font-size:15px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:var(--text)}
+input:focus{outline:2px solid #93c5fd;border-color:var(--blue)}
+.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}
+button{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:700;padding:11px 15px;border-radius:8px;border:0;cursor:pointer;background:var(--primary);color:#fff}
+button:disabled{opacity:.55;cursor:wait}button.alt{background:#f1f5f9;color:var(--text);border:1px solid var(--border)}button.danger{background:var(--danger);color:#fff}button.sm{padding:7px 10px;font-size:12px}
+.status{display:none;font-size:14px;margin-top:12px;padding:11px 12px;border-radius:8px;font-weight:600;overflow-wrap:anywhere}
+.status.active{display:block}.status.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}.status.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.hidden{display:none!important}.role-pill{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af}.role-admin{background:#ef4444;color:#fff}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border:1px solid var(--border);padding:13px;border-radius:10px}.stat-card span{font-size:12px;color:var(--muted);font-weight:700}.stat-card strong{display:block;font-size:24px;margin-top:4px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:500px;text-align:left}
+th{background:#f8fafc;color:#475569;font-size:12px;padding:11px;border-bottom:1px solid var(--border)}td{padding:11px;font-size:14px;border-bottom:1px solid var(--border)}
+.num{text-align:right}.count-badge{display:inline-block;background:#f1f5f9;padding:4px 9px;border-radius:6px;font-weight:700}
+.sharebar{height:6px;background:#e2e8f0;border-radius:9px;overflow:hidden;max-width:120px;margin-top:4px}.sharefill{height:100%;background:var(--blue)}
+#previewRows{display:grid;gap:8px;margin-top:12px}.editrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(90px,1fr) auto;gap:8px;align-items:center;background:#f8fafc;padding:8px;border:1px solid var(--border);border-radius:8px}
+.history-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chip{background:#fff;color:#1e3a8a;border:1px solid var(--border);padding:7px 10px;border-radius:8px}
+.small-note{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:520px){.card{padding:14px}.editrow{grid-template-columns:1fr 100px auto}.header-container{align-items:flex-start}h1{font-size:18px}button{padding:10px 12px}}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="header-container">
-    <div class="header-title">
-      <h1>📊 Employee Daily Performance</h1>
-      <p>कर्मचारी रिपोर्ट पोर्टल — तारीख चुनें, खोजें एवं रिपोर्ट डाउनलोड करें</p>
-    </div>
-    <div id="userHeaderSection" class="hidden">
-      <div class="user-badge">
-        <span id="userEmailTxt">user@domain.com</span>
-        <span id="userRoleBadge" class="role-pill role-viewer">Staff</span>
-        <button type="button" class="alt sm" onclick="doLogout()">🚪 लॉगआउट</button>
-      </div>
-    </div>
-  </div>
-</header>
-
+<header><div class="header-container">
+  <div><h1>📊 Employee Daily Performance</h1><p>कर्मचारी रिपोर्ट पोर्टल — तारीख चुनें, रिपोर्ट देखें और डाउनलोड करें</p></div>
+  <div id="userHeaderSection" class="hidden"><span id="userEmailTxt"></span> <span id="userRoleBadge" class="role-pill">Staff</span> <button type="button" class="alt sm" onclick="doLogout()">लॉगआउट</button></div>
+</div></header>
 <main>
-  <!-- LOGIN CARD -->
-  <section class="card" id="setupCard">
-    <div class="card-header">
-      <div>
-        <h2 class="card-title">🔐 पोर्टल लॉगिन</h2>
-        <p class="card-desc">एडमिन पासवर्ड <b>admin123</b> है। स्टाफ पासवर्ड <b>staff123</b> है।</p>
-      </div>
-    </div>
-    <div class="row">
-      <div>
-        <label>ईमेल (Email Address)</label>
-        <input id="email" type="email" value="mishranit102@gmail.com">
-      </div>
-      <div>
-        <label>पासवर्ड (Password)</label>
-        <input id="password" type="password" value="admin123" placeholder="admin123">
-      </div>
-    </div>
-    <div style="margin-top:16px;">
-      <button type="button" id="loginBtn" onclick="doInstantLogin()" style="width:100%; font-size:16px;">लॉगिन करें (Enter Portal)</button>
-    </div>
-    <div id="authMsg" class="status"></div>
-  </section>
+<section class="card" id="setupCard">
+  <div class="card-header"><div><h2 class="card-title">🔐 पोर्टल लॉगिन</h2><p class="card-desc">डेमो लॉगिन: Admin password <b>admin123</b>; Staff password <b>staff123</b></p></div></div>
+  <div class="row"><div><label for="email">ईमेल</label><input id="email" type="email" value="" placeholder="अपना ईमेल लिखें" autocomplete="username"></div><div><label for="password">पासवर्ड</label><input id="password" type="password" placeholder="पासवर्ड" autocomplete="current-password"></div></div>
+  <button type="button" id="loginBtn" style="width:100%;margin-top:14px" onclick="doInstantLogin()">लॉगिन करें</button>
+  <div id="authMsg" class="status"></div>
+  <p class="small-note">सुरक्षा सूचना: यह साधारण डेमो लॉगिन है, वास्तविक सुरक्षित प्रमाणीकरण नहीं। शाखा का गोपनीय डेटा सार्वजनिक रूप से न रखें।</p>
+</section>
 
-  <!-- ADMIN OCR UPLOAD -->
-  <section class="card hidden" id="uploadCard">
-    <div class="card-header">
-      <div>
-        <h2 class="card-title">📷 तारीख की फोटो अपलोड (OCR Scanning)</h2>
-        <p class="card-desc">केवल एडमिन के लिए: Xerox शीट की फोटो से कर्मचारी नाम व संख्या ऑटोमैटिक स्कैन करें।</p>
-      </div>
-      <span class="role-pill role-admin">Admin Access</span>
-    </div>
+<section class="card hidden" id="uploadCard">
+  <div class="card-header"><div><h2 class="card-title">📷 तारीख की फोटो अपलोड (OCR Scanning)</h2><p class="card-desc">Xerox शीट की फोटो से कर्मचारी नाम और संख्या पढ़ने का प्रयास करें।</p></div><span class="role-pill role-admin">Admin</span></div>
+  <div class="row"><div><label for="uploadDate">रिपोर्ट तारीख</label><input id="uploadDate" type="date"></div><div><label for="imageFile">दस्तावेज़ / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*"></div></div>
+  <button type="button" id="readBtn" style="margin-top:12px" onclick="readImageOCR()">🔍 फोटो स्कैन करें (OCR)</button>
+  <div id="ocrMsg" class="status"></div>
+  <div id="previewBox" class="hidden" style="margin-top:16px;border-top:1px dashed var(--border);padding-top:14px">
+    <h3 style="font-size:15px">डेटा सत्यापन व सुधार</h3><div id="previewRows"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="alt" onclick="addPreviewRow()">+ कर्मचारी जोड़ें</button><button type="button" id="saveBtn" onclick="saveReportData()">💾 डेटा सेव करें</button></div>
+  </div>
+</section>
 
-    <div class="row">
-      <div><label>रिपोर्ट तारीख</label><input id="uploadDate" type="date"></div>
-      <div><label>दस्तावेज़ / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*"></div>
-    </div>
-    <div style="margin-top:14px;">
-      <button type="button" id="readBtn" onclick="readImageOCR()">🔍 फोटो स्कैन करें (OCR)</button>
-    </div>
-    <div id="ocrMsg" class="status"></div>
+<section class="card hidden" id="searchCard">
+  <div class="card-header"><div><h2 class="card-title">🔎 कर्मचारी रिपोर्ट खोजें</h2><p class="card-desc">तारीख चुनकर उस दिन का विवरण देखें या डाउनलोड करें।</p></div><div style="width:170px;max-width:100%"><label for="searchDate">रिपोर्ट तारीख</label><input id="searchDate" type="date"></div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button type="button" onclick="searchReport()">🔍 रिपोर्ट देखें</button><button type="button" class="alt" onclick="setTodayDate()">📅 आज</button><button type="button" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button><button type="button" class="alt" onclick="exportCSV()">📊 Excel / CSV</button><button type="button" id="deleteDateBtn" class="danger hidden" onclick="deleteCurrentDate()">🗑️ तारीख हटाएँ</button></div>
+  <div id="searchMsg" class="status"></div>
+  <div id="pdfContent" class="hidden"><div class="stats-grid"><div class="stat-card"><span>कुल कर्मचारी रिकॉर्ड</span><strong id="totalEmployees">0</strong></div><div class="stat-card"><span>कुल योग</span><strong id="totalCount">0</strong></div><div class="stat-card"><span>प्रति रिकॉर्ड औसत</span><strong id="avgCount">0</strong></div></div>
+  <div class="table-wrap"><table><thead><tr><th>क्रम</th><th>कर्मचारी का नाम</th><th>योगदान (% शेयर)</th><th class="num">संख्या</th></tr></thead><tbody id="reportBody"></tbody></table></div></div>
+</section>
 
-    <div id="previewBox" class="hidden" style="margin-top:18px; border-top:1px dashed var(--border); padding-top:14px;">
-      <h3 style="font-size:15px; font-weight:700; margin-bottom:8px;">डेटा सत्यापन व सुधार</h3>
-      <div id="previewRows"></div>
-      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" id="addRowBtn" class="alt sm" onclick="addPreviewRow()">+ कर्मचारी जोड़ें</button>
-        <button type="button" id="saveBtn" onclick="saveReportData()">💾 डेटा सेव करें</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- SEARCH & REPORT -->
-  <section class="card hidden" id="searchCard">
-    <div class="card-header">
-      <div>
-        <h2 class="card-title">🔎 कर्मचारी रिपोर्ट खोजें</h2>
-        <p class="card-desc">तारीख चुनें और उस दिन का कर्मचारी वार विवरण देखें या डाउनलोड करें।</p>
-      </div>
-      <div style="max-width:180px;">
-        <label style="margin:0 0 4px;">तारीख</label>
-        <input id="searchDate" type="date" style="padding:8px 12px;">
-      </div>
-    </div>
-
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-      <button type="button" onclick="searchReport()">🔍 रिपोर्ट देखें</button>
-      <button type="button" class="alt" onclick="setTodayDate()">📅 आज</button>
-      <button type="button" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button>
-      <button type="button" class="alt" onclick="exportCSV()">📊 Excel / CSV</button>
-      <button type="button" id="deleteDateBtn" class="danger hidden" style="margin-left:auto;" onclick="deleteCurrentDate()">🗑️ यह तारीख हटाएँ</button>
-    </div>
-
-    <div id="searchMsg" class="status"></div>
-
-    <div id="pdfContent" class="hidden">
-      <div class="stats-grid">
-        <div class="stat-card"><span>कुल कर्मचारी</span><strong id="totalEmployees">0</strong></div>
-        <div class="stat-card"><span>कुल योग</span><strong id="totalCount" style="color:var(--primary);">0</strong></div>
-        <div class="stat-card"><span>प्रति कर्मचारी औसत</span><strong id="avgCount">0</strong></div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:70px;">क्रम</th>
-              <th>कर्मचारी का नाम</th>
-              <th style="width:160px;">योगदान (% शेयर)</th>
-              <th class="num-col" style="width:110px;">नंबर</th>
-            </tr>
-          </thead>
-          <tbody id="reportBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- HISTORY ARCHIVE -->
-  <section class="card hidden" id="historyCard">
-    <div class="card-header">
-      <div>
-        <h2 class="card-title">🗂️ उपलब्ध तारीखें (Archive)</h2>
-        <p class="card-desc">किसी भी तारीख पर क्लिक करके सीधे रिपोर्ट खोलें।</p>
-      </div>
-    </div>
-    <div id="historyChips" class="history-chips"></div>
-  </section>
+<section class="card hidden" id="historyCard"><div class="card-header"><div><h2 class="card-title">🗂️ उपलब्ध तारीखें (Archive)</h2><p class="card-desc">किसी तारीख पर क्लिक करके रिपोर्ट खोलें।</p></div></div><div id="historyChips" class="history-chips"></div></section>
 </main>
-
 <script>
 const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhbGciOiJIUzI1NiIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+let sb=null,currentUser=null,isAdmin=false,lastRows=[];
+const $=id=>document.getElementById(id);
+function showStatus(id,text,isOk=false){const el=$(id);if(!el)return;if(!text){el.className="status";el.textContent="";return;}el.textContent=text;el.className="status active "+(isOk?"ok":"err");}
+function getLocalDate(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
+function getClient(){if(!sb&&window.supabase)sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);return sb;}
 
-let sb = null, currentUser = null, isAdmin = false, lastRows = [];
-const $ = id => document.getElementById(id);
+function doInstantLogin(){
+  const email=$("email").value.trim(),password=$("password").value;
+  if(!email){showStatus("authMsg","कृपया ईमेल भरें।");return;}
+  if(password==="admin123"){currentUser={email};isAdmin=true;localStorage.setItem("app_user",JSON.stringify({email,role:"admin"}));renderDashboard();return;}
+  if(password==="staff123"){currentUser={email};isAdmin=false;localStorage.setItem("app_user",JSON.stringify({email,role:"staff"}));renderDashboard();return;}
+  showStatus("authMsg","गलत पासवर्ड। डेमो Admin: admin123 या Staff: staff123");
+}
+function renderDashboard(){
+  $("setupCard").classList.add("hidden");$("userHeaderSection").classList.remove("hidden");$("searchCard").classList.remove("hidden");$("historyCard").classList.remove("hidden");
+  $("userEmailTxt").textContent=currentUser.email;const badge=$("userRoleBadge");
+  badge.textContent=isAdmin?"Admin":"Staff";badge.className="role-pill"+(isAdmin?" role-admin":"");
+  $("uploadCard").classList.toggle("hidden",!isAdmin);$("deleteDateBtn").classList.toggle("hidden",!isAdmin);
+  $("uploadDate").value=getLocalDate();$("searchDate").value=getLocalDate();
+  loadHistoryDates();searchReport();
+}
+function doLogout(){localStorage.removeItem("app_user");currentUser=null;isAdmin=false;lastRows=[];["setupCard"].forEach(id=>$(id).classList.remove("hidden"));["userHeaderSection","uploadCard","searchCard","historyCard","pdfContent"].forEach(id=>$(id).classList.add("hidden"));showStatus("authMsg","");}
 
-function showStatus(id, text, isOk = false) {
-  const el = $(id);
-  if (!text) { el.className = 'status'; el.textContent = ''; return; }
-  el.textContent = text;
-  el.className = 'status active ' + (isOk ? 'ok' : 'err');
+function compressImage(file){
+ return new Promise((resolve,reject)=>{
+  if(!file){reject(new Error("पहले फोटो चुनें।"));return;}
+  if(!file.type||!file.type.startsWith("image/")){reject(new Error("कृपया JPG या PNG फोटो चुनें।"));return;}
+  const reader=new FileReader();reader.onerror=()=>reject(new Error("मोबाइल से फोटो पढ़ी नहीं जा सकी।"));
+  reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("फोटो नहीं खुली। Gallery से दूसरी JPG फोटो चुनें।"));
+   img.onload=()=>{try{let w=img.naturalWidth,h=img.naturalHeight;if(!w||!h)throw new Error("फोटो का आकार नहीं मिला।");const scale=Math.min(1,1800/Math.max(w,h));w=Math.round(w*scale);h=Math.round(h*scale);const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas उपलब्ध नहीं है।");ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);const out=canvas.toDataURL("image/jpeg",.9);if(out==="data:,")throw new Error("फोटो कन्वर्ट नहीं हुई।");resolve(out);}catch(e){reject(e);}};
+   img.src=reader.result;};reader.readAsDataURL(file);
+ });
 }
 
-function getLocalDate() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
+// यह फ़ंक्शन स्कैन से मिली हर कर्मचारी एंट्री के लिए एक editable row बनाता है।
+function addPreviewRow(name="",count=0){
+ const container=$("previewRows");if(!container)return;
+ const row=document.createElement("div");row.className="editrow";
+ const nameInput=document.createElement("input");nameInput.type="text";nameInput.className="empname";nameInput.placeholder="कर्मचारी का नाम";nameInput.value=name;nameInput.required=true;nameInput.setAttribute("aria-label","कर्मचारी का नाम");
+ const countInput=document.createElement("input");countInput.type="number";countInput.className="empcount";countInput.placeholder="संख्या";countInput.min="0";countInput.step="1";countInput.value=count;countInput.required=true;countInput.setAttribute("aria-label","कर्मचारी की संख्या");
+ const remove=document.createElement("button");remove.type="button";remove.className="danger sm";remove.textContent="हटाएँ";remove.onclick=()=>row.remove();
+ row.append(nameInput,countInput,remove);container.appendChild(row);
 }
 
-function getClient() {
-  if (!sb && window.supabase) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function readImageOCR(){
+ if(!isAdmin){showStatus("ocrMsg","केवल Admin स्कैन कर सकता है।");return;}
+ const file=$("imageFile").files[0];if(!file){showStatus("ocrMsg","पहले फोटो चुनें।");return;}
+ if(!window.Tesseract||typeof Tesseract.recognize!=="function"){showStatus("ocrMsg","OCR लाइब्रेरी लोड नहीं हुई। इंटरनेट चालू करके Refresh करें।");return;}
+ const btn=$("readBtn");btn.disabled=true;$("previewRows").innerHTML="";$("previewBox").classList.add("hidden");
+ try{
+  showStatus("ocrMsg","फोटो तैयार की जा रही है...",true);const image=await compressImage(file);
+  const result=await Tesseract.recognize(image,"eng",{logger:m=>{if(m.status==="recognizing text")showStatus("ocrMsg","स्कैनिंग प्रगति: "+Math.round((m.progress||0)*100)+"%",true);}});
+  const lines=(result?.data?.text||"").split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean),found=[];
+  for(const line of lines){
+   const m=line.match(/^(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]\s*$/);
+   if(m){const name=m[1].replace(/[|•·\-_:]+$/g,"").trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}
   }
-  return sb;
+  const unique=new Map();found.forEach(x=>unique.set(x.name.toLowerCase()+"|"+x.count,x));const items=[...unique.values()];
+  $("previewBox").classList.remove("hidden");
+  if(!items.length){showStatus("ocrMsg",'नाम और (नंबर) का पैटर्न नहीं मिला। "+ कर्मचारी जोड़ें" से मैन्युअल डेटा भरें।');return;}
+  items.forEach(x=>addPreviewRow(x.name,x.count));showStatus("ocrMsg",items.length+" रिकॉर्ड मिले। जाँचकर डेटा सेव करें।",true);
+ }catch(err){console.error(err);showStatus("ocrMsg","स्कैनिंग त्रुटि: "+(err?.message||String(err)));}
+ finally{btn.disabled=false;}
 }
 
-// ==========================================
-// DIRECT INSTANT LOGIN (NO SUPABASE AUTH DELAY)
-// ==========================================
-function doInstantLogin() {
-  const email = $('email').value.trim();
-  const password = $('password').value.trim();
-
-  if (!email) {
-    alert("ईमेल भरें!");
-    return;
-  }
-
-  // अगर mishranit102@gmail.com या पासवर्ड admin123 हो तो सीधा ADMIN
-  if (email.toLowerCase().includes("mishranit102") || password === "admin123") {
-    currentUser = { email: email || "mishranit102@gmail.com" };
-    isAdmin = true;
-    localStorage.setItem("app_user", JSON.stringify({ email: currentUser.email, role: "admin" }));
-    renderDashboard();
-    return;
-  }
-
-  // स्टाफ लॉगिन
-  if (password === "staff123" || password.length >= 4) {
-    currentUser = { email: email };
-    isAdmin = false;
-    localStorage.setItem("app_user", JSON.stringify({ email: currentUser.email, role: "staff" }));
-    renderDashboard();
-    return;
-  }
-
-  alert("गलत पासवर्ड! एडमिन पासवर्ड admin123 है, और स्टाफ पासवर्ड staff123 है।");
+async function saveReportData(){
+ if(!isAdmin)return;const client=getClient();if(!client){showStatus("ocrMsg","डेटाबेस लाइब्रेरी उपलब्ध नहीं है। इंटरनेट जाँचें।");return;}
+ const date=$("uploadDate").value;if(!date){showStatus("ocrMsg","रिपोर्ट तारीख चुनें।");return;}
+ const rows=[...$("previewRows").querySelectorAll(".editrow")].map(r=>({employee_name:r.querySelector(".empname").value.trim(),employee_count:Number(r.querySelector(".empcount").value)})).filter(r=>r.employee_name&&Number.isInteger(r.employee_count)&&r.employee_count>=0);
+ if(!rows.length){showStatus("ocrMsg","कम से कम एक कर्मचारी और पूर्ण संख्या दर्ज करें।");return;}
+ $("saveBtn").disabled=true;
+ try{
+  const del=await client.from("employee_daily_reports").delete().eq("report_date",date);if(del.error)throw del.error;
+  const payload=rows.map(r=>({...r,report_date:date}));const ins=await client.from("employee_daily_reports").insert(payload);if(ins.error)throw ins.error;
+  showStatus("ocrMsg",date+" का डेटा सेव हो गया ("+rows.length+" रिकॉर्ड)।",true);$("searchDate").value=date;await searchReport();await loadHistoryDates();
+ }catch(err){showStatus("ocrMsg","डेटा सेव नहीं हुआ: "+(err.message||String(err)));}
+ finally{$("saveBtn").disabled=false;}
 }
 
-function renderDashboard() {
-  $('setupCard').classList.add('hidden');$('userHeaderSection').classList.remove('hidden');
-  $('searchCard').classList.remove('hidden');$('historyCard').classList.remove('hidden');
-
-  $('userEmailTxt').textContent = currentUser.email;
-  const roleBadge = $('userRoleBadge');
-  if (isAdmin) {
-    roleBadge.textContent = "Admin";
-    roleBadge.className = "role-pill role-admin";
-    $('uploadCard').classList.remove('hidden');$('deleteDateBtn').classList.remove('hidden');
-  } else {
-    roleBadge.textContent = "Staff";
-    roleBadge.className = "role-pill role-viewer";
-    $('uploadCard').classList.add('hidden');$('deleteDateBtn').classList.add('hidden');
-  }
-
-  $('uploadDate').value = getLocalDate();$('searchDate').value = getLocalDate();
-
-  loadHistoryDates();
-  searchReport();
+async function searchReport(){
+ const client=getClient();if(!client){showStatus("searchMsg","डेटाबेस लाइब्रेरी उपलब्ध नहीं है। इंटरनेट जाँचें।");return;}
+ const date=$("searchDate").value;if(!date){showStatus("searchMsg","तारीख चुनें।");return;}
+ showStatus("searchMsg","डेटा लोड हो रहा है...",true);$("pdfContent").classList.add("hidden");
+ const {data,error}=await client.from("employee_daily_reports").select("employee_name,employee_count,report_date").eq("report_date",date).order("employee_count",{ascending:false});
+ if(error){showStatus("searchMsg","डेटाबेस त्रुटि: "+error.message);return;}
+ lastRows=data||[];if(!lastRows.length){showStatus("searchMsg","तारीख "+date+" का कोई रिकॉर्ड उपलब्ध नहीं है।");return;}
+ const total=lastRows.reduce((sum,r)=>sum+(Number(r.employee_count)||0),0),avg=(total/lastRows.length).toFixed(1);
+ $("totalEmployees").textContent=lastRows.length;$("totalCount").textContent=total.toLocaleString("en-IN");$("avgCount").textContent=avg;
+ const tbody=$("reportBody");tbody.innerHTML="";
+ lastRows.forEach((r,i)=>{
+  const count=Number(r.employee_count)||0,share=total>0?count/total*100:0,tr=document.createElement("tr");
+  const td1=document.createElement("td");td1.textContent="#"+(i+1);
+  const td2=document.createElement("td");td2.textContent=r.employee_name;td2.style.fontWeight="600";
+  const td3=document.createElement("td");const pct=document.createElement("div");pct.textContent=share.toFixed(1)+"%";const bar=document.createElement("div");bar.className="sharebar";const fill=document.createElement("div");fill.className="sharefill";fill.style.width=share+"%";bar.appendChild(fill);td3.append(pct,bar);
+  const td4=document.createElement("td");td4.className="num";const badge=document.createElement("span");badge.className="count-badge";badge.textContent=count.toLocaleString("en-IN");td4.appendChild(badge);
+  tr.append(td1,td2,td3,td4);tbody.appendChild(tr);
+ });
+ const tr=document.createElement("tr");tr.style.background="#f8fafc";tr.style.fontWeight="700";const a=document.createElement("td"),b=document.createElement("td"),c=document.createElement("td"),d=document.createElement("td");b.textContent="कुल योग ("+lastRows.length+" रिकॉर्ड)";c.textContent=total>0?"100.0%":"0.0%";c.style.color="#475569";c.style.textAlign="center";d.className="num";const badge=document.createElement("span");badge.className="count-badge";badge.textContent=total.toLocaleString("en-IN");d.appendChild(badge);tr.append(a,b,c,d);tbody.appendChild(tr);
+ $("pdfContent").classList.remove("hidden");showStatus("searchMsg","तारीख "+date+": कुल "+lastRows.length+" रिकॉर्ड, योग: "+total,true);
 }
-
-function doLogout() {
-  localStorage.removeItem("app_user");
-  currentUser = null;
-  isAdmin = false;
-  $('setupCard').classList.remove('hidden');$('userHeaderSection').classList.add('hidden');
-  $('uploadCard').classList.add('hidden');$('searchCard').classList.add('hidden');
-  $('historyCard').classList.add('hidden');$('pdfContent').classList.add('hidden');
+function setTodayDate(){$("searchDate").value=getLocalDate();searchReport();}
+async function deleteCurrentDate(){
+ if(!isAdmin)return;const client=getClient(),date=$("searchDate").value;if(!date)return;
+ if(!confirm("क्या आप तारीख "+date+" का पूरा डेटा हटाना चाहते हैं?"))return;
+ try{const {error}=await client.from("employee_daily_reports").delete().eq("report_date",date);if(error)throw error;lastRows=[];$("pdfContent").classList.add("hidden");showStatus("searchMsg",date+" का डेटा हटा दिया गया।",true);await loadHistoryDates();}
+ catch(err){showStatus("searchMsg","डिलीट त्रुटि: "+(err.message||String(err)));}
 }
-
-// ==========================================
-// OCR / ADMIN UPLOAD
-// ==========================================
-
-
-function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) {
-      reject(new Error("पहले फोटो चुनें।"));
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onerror = () => {
-      reject(new Error("मोबाइल से फोटो पढ़ी नहीं जा सकी।"));
-    };
-
-    reader.onload = () => {
-      const img = new Image();
-
-      img.onerror = () => {
-        reject(new Error(
-          "फोटो का फॉर्मेट नहीं पढ़ा जा रहा। Gallery से JPG फोटो चुनें।"
-        ));
-      };
-
-      img.onload = () => {
-        try {
-          let w = img.naturalWidth;
-          let h = img.naturalHeight;
-
-          if (!w || !h) {
-            throw new Error("फोटो का आकार नहीं मिला।");
-          }
-
-          const max = 1800;
-          const scale = Math.min(1, max / Math.max(w, h));
-
-          w = Math.max(1, Math.round(w * scale));
-          h = Math.max(1, Math.round(h * scale));
-
-          const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
-
-          const ctx = canvas.getContext("2d");
-          if (!ctx) throw new Error("Canvas उपलब्ध नहीं है।");
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-
-          const output = canvas.toDataURL("image/jpeg", 0.9);
-
-          if (!output || output === "data:,") {
-            throw new Error("फोटो कन्वर्ट नहीं हो सकी।");
-          }
-
-          resolve(output);
-        } catch (err) {
-          reject(err);
-        }
-      };
-
-      img.src = reader.result;
-    };
-
-    reader.readAsDataURL(file);
-  });
+function exportPDF(){
+ if(!lastRows.length){showStatus("searchMsg","पहले किसी तारीख की रिपोर्ट खोलें।");return;}
+ if(typeof html2pdf!=="function"){showStatus("searchMsg","PDF लाइब्रेरी लोड नहीं हुई। इंटरनेट जाँचें।");return;}
+ const date=$("searchDate").value;showStatus("searchMsg","PDF तैयार हो रही है...",true);
+ html2pdf().set({margin:10,filename:"Employee_Report_"+date+".pdf",image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from($("pdfContent")).save().then(()=>showStatus("searchMsg","PDF डाउनलोड हो गई।",true)).catch(e=>showStatus("searchMsg","PDF त्रुटि: "+e.message));
 }
-
-async function readImageOCR() {
-  if (!isAdmin) {
-    showStatus("ocrMsg", "केवल Admin स्कैन कर सकता है।");
-    return;
-  }
-
-  const file = $("imageFile").files[0];
-
-  if (!file) {
-    showStatus("ocrMsg", "पहले फोटो चुनें।");
-    return;
-  }
-
-  if (!window.Tesseract) {
-    showStatus(
-      "ocrMsg",
-      "OCR लाइब्रेरी लोड नहीं हुई। इंटरनेट चालू करके पेज Refresh करें।"
-    );
-    return;
-  }
-
-  const btn = $("readBtn");
-  btn.disabled = true;
-  $("previewRows").innerHTML = "";
-  $("previewBox").classList.add("hidden");
-
-  try {
-    showStatus("ocrMsg", "फोटो पढ़ी जा रही है...", true);
-
-    const imageData = await compressImage(file);
-
-    showStatus("ocrMsg", "OCR स्कैनिंग शुरू हो रही है...", true);
-
-    const result = await window.Tesseract.recognize(
-      imageData,
-      "eng",
-      {
-        logger: m => {
-          if (m.status === "recognizing text") {
-            showStatus(
-              "ocrMsg",
-              "स्कैनिंग प्रगति: " +
-              Math.round((m.progress || 0) * 100) + "%",
-              true
-            );
-          }
-        }
-      }
-    );
-
-    const lines = (result.data.text || "")
-      .split(/\r?\n/)
-      .map(x => x.replace(/\s+/g, " ").trim())
-      .filter(Boolean);
-
-    const found = [];
-
-    for (const line of lines) {
-      const m = line.match(
-        /^(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]\s*$/
-      );
-
-      if (m) {
-        const name = m[1].trim();
-
-        if (name.length > 1) {
-          found.push({
-            name,
-            count: Number(m[2])
-          });
-        }
-      }
-    }
-
-    const unique = new Map();
-
-    found.forEach(x => {
-      unique.set(x.name.toLowerCase() + "|" + x.count, x);
-    });
-
-    const items = [...unique.values()];
-
-    $("previewBox").classList.remove("hidden");
-
-    if (!items.length) {
-      showStatus(
-        "ocrMsg",
-        "फोटो पढ़ी गई, लेकिन नाम और नंबर नहीं मिले। + कर्मचारी जोड़ें से मैन्युअल एंट्री करें।"
-      );
-      return;
-    }
-
-    items.forEach(x => addPreviewRow(x.name, x.count));
-
-    showStatus(
-      "ocrMsg",
-      items.length + " रिकॉर्ड मिले। जाँचकर डेटा सेव करें।",
-      true
-    );
-
-  } catch (err) {
-    console.error("OCR Error:", err);
-    showStatus(
-      "ocrMsg",
-      "त्रुटि: " + (err.message || String(err))
-    );
-  } finally {
-    btn.disabled = false;
-  }
+function exportCSV(){
+ if(!lastRows.length){showStatus("searchMsg","डाउनलोड करने के लिए कोई डेटा नहीं है।");return;}
+ const date=$("searchDate").value,total=lastRows.reduce((s,r)=>s+(Number(r.employee_count)||0),0);
+ let csv="S.No.,Employee Name,Count,Share (%)\r\n";
+ lastRows.forEach((r,i)=>{const c=Number(r.employee_count)||0,share=total>0?(c/total*100).toFixed(2):"0.00";csv+=`"${i+1}","${String(r.employee_name||"").replace(/"/g,'""')}","${c}","${share}%"\r\n`;});
+ csv+=`,"TOTAL","${total}","${total>0?"100%":"0%"}"\r\n`;
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Employee_Report_"+date+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-
-
-async function readImageOCR() {
-  if (!isAdmin) {
-    showStatus("ocrMsg", "केवल Admin स्कैन कर सकता है।");
-    return;
-  }
-
-  const file = $("imageFile").files[0];
-
-  if (!file) {
-    showStatus("ocrMsg", "कृपया पहले फोटो चुनें।");
-    return;
-  }
-
-  if (!window.Tesseract ||
-      typeof window.Tesseract.recognize !== "function") {
-    showStatus(
-      "ocrMsg",
-      "OCR लाइब्रेरी लोड नहीं हुई। इंटरनेट जाँचें और पेज दोबारा खोलें।"
-    );
-    return;
-  }
-
-  const btn = $("readBtn");
-  btn.disabled = true;
-  $("previewRows").innerHTML = "";
-  $("previewBox").classList.add("hidden");
-
-  try {
-    showStatus("ocrMsg", "फोटो पढ़ी जा रही है...", true);
-
-    const imageData = await compressImage(file);
-
-    showStatus(
-      "ocrMsg",
-      "OCR स्कैनिंग शुरू हो रही है। कृपया प्रतीक्षा करें...",
-      true
-    );
-
-    const result = await window.Tesseract.recognize(
-      imageData,
-      "eng",
-      {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            const percent = Math.round((m.progress || 0) * 100);
-            showStatus(
-              "ocrMsg",
-              "स्कैनिंग प्रगति: " + percent + "%",
-              true
-            );
-          }
-        }
-      }
-    );
-
-    const text = result?.data?.text || "";
-    const lines = text.split(/\r?\n/)
-      .map(line => line.replace(/\s+/g, " ").trim())
-      .filter(Boolean);
-
-    const found = [];
-
-    for (const line of lines) {
-      // उदाहरण: Rahul Sharma (25)
-      const match = line.match(
-        /^(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]\s*$/
-      );
-
-      if (match) {
-        const name = match[1]
-          .replace(/[|•·\-_:]+$/g, "")
-          .trim();
-
-        if (
-          name.length > 1 &&
-          !/select all|filter by|ascending|descending|search/i.test(name)
-        ) {
-          found.push({
-            name,
-            count: Number(match[2])
-          });
-        }
-      }
-    }
-
-    const unique = new Map();
-
-    found.forEach(item => {
-      unique.set(
-        item.name.toLowerCase() + "|" + item.count,
-        item
-      );
-    });
-
-    const items = [...unique.values()];
-
-    $("previewBox").classList.remove("hidden");
-
-    if (items.length === 0) {
-      showStatus(
-        "ocrMsg",
-        "फोटो पढ़ ली गई, लेकिन नाम और (नंबर) का सही पैटर्न नहीं मिला। नीचे + कर्मचारी जोड़ें से डेटा भरें।"
-      );
-      return;
-    }
-
-    items.forEach(item => addPreviewRow(item.name, item.count));
-
-    showStatus(
-      "ocrMsg",
-      items.length + " रिकॉर्ड मिले। कृपया जाँचकर डेटा सेव करें।",
-      true
-    );
-
-  } catch (err) {
-    console.error("OCR Error:", err);
-
-    showStatus(
-      "ocrMsg",
-      "स्कैनिंग त्रुटि: " +
-      (err?.message || String(err)) +
-      " इंटरनेट जाँचें और छोटी JPG फोटो से दोबारा कोशिश करें।"
-    );
-  } finally {
-    btn.disabled = false;
-  }
+async function loadHistoryDates(){
+ const client=getClient();if(!client)return;
+ const {data,error}=await client.from("employee_daily_reports").select("report_date").order("report_date",{ascending:false}).limit(1000);
+ if(error){$("historyChips").textContent="तारीखें लोड नहीं हुईं: "+error.message;return;}
+ const dates=[...new Set((data||[]).map(x=>x.report_date))],container=$("historyChips");container.innerHTML="";
+ if(!dates.length){container.textContent="कोई पुराना डेटा उपलब्ध नहीं है।";return;}
+ dates.forEach(date=>{const btn=document.createElement("button");btn.type="button";btn.className="chip";btn.textContent="📅 "+date;btn.onclick=()=>{$("searchDate").value=date;searchReport();$("searchCard").scrollIntoView({behavior:"smooth"});};container.appendChild(btn);});
 }
-
-async function readImageOCR() {
-  if (!isAdmin) return;
-  const f = $('imageFile').files[0];
-  if (!f) { showStatus('ocrMsg', 'कृपया पहले फोटो चुनें।'); return; }
-
-  $('readBtn').disabled = true;
-  $('previewRows').innerHTML = '';$('previewBox').classList.add('hidden');
-  showStatus('ocrMsg', 'फोटो तैयार की जा रही है...', true);
-
-  try {
-    const optimizedBlob = await compressImage(f);
-    showStatus('ocrMsg', 'OCR स्कैनिंग जारी है... कृपया 5-10 सेकंड प्रतीक्षा करें।', true);
-
-    const ret = await Tesseract.recognize(
-      optimizedBlob,
-      'eng',
-      {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            showStatus('ocrMsg', `स्कैनिंग प्रगति: ${Math.round((m.progress || 0) * 100)}%`, true);
-          }
-        }
-      }
-    );
-
-    const lines = (ret.data.text || '').split(/\n/).map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
-    const found = [];
-
-    for (const line of lines) {
-      const m = line.match(/(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]/);
-      if (m) {
-        let name = m[1].replace(/[|•·\-_:]+$/g, '').trim();
-        if (name.length > 1 && !/select all|filter by|ascending|descending|search/i.test(name)) {
-          found.push({ name, count: Number(m[2]) });
-        }
-      }
-    }
-
-    const dedup = new Map();
-    found.forEach(x => dedup.set(x.name.toLowerCase() + '|' + x.count, x));
-    const items = [...dedup.values()];
-
-    if (!items.length) {
-      showStatus('ocrMsg', 'नाम और (नंबर) ऑटोमैटिक नहीं मिल पाए। नीचे "+ कर्मचारी जोड़ें" से भरें।');
-      $('previewBox').classList.remove('hidden');
-      return;
-    }
-
-    items.forEach(x => addPreviewRow(x.name, x.count));
-    $('previewBox').classList.remove('hidden');
-    showStatus('ocrMsg', `${items.length} कर्मचारी मिले। डेटा जाँचकर सेव करें।`, true);
-  } catch (err) {
-    showStatus('ocrMsg', 'स्कैनिंग त्रुटि: ' + (err?.message || err));
-  } finally {
-    $('readBtn').disabled = false;
-  }
-}
-
-async function saveReportData() {
-  if (!isAdmin) return;
-  const client = getClient();
-  const date = $('uploadDate').value;
-  if (!date) { showStatus('ocrMsg', 'तारीख का चयन करें।'); return; }
-
-  const rows = [...$('previewRows').querySelectorAll('.editrow')].map(r => ({
-    employee_name: r.querySelector('.empname').value.trim(),
-    employee_count: Number(r.querySelector('.empcount').value)
-  })).filter(r => r.employee_name && Number.isFinite(r.employee_count) && r.employee_count >= 0);
-
-  if (!rows.length) {
-    showStatus('ocrMsg', 'कम से कम एक कर्मचारी व मान्य संख्या दर्ज करें।');
-    return;
-  }
-
-  $('saveBtn').disabled = true;
-  try {
-    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
-    if (del.error) throw del.error;
-
-    const payload = rows.map(r => ({
-      employee_name: r.employee_name,
-      employee_count: r.employee_count,
-      report_date: date
-    }));
-
-    const ins = await client.from('employee_daily_reports').insert(payload);
-    if (ins.error) throw ins.error;
-
-    showStatus('ocrMsg', `${date} का डेटा सुरक्षित सेव हो गया (${rows.length} रिकॉर्ड्स)।`, true);
-    $('searchDate').value = date;
-    await searchReport();
-    await loadHistoryDates();
-  } catch (err) {
-    showStatus('ocrMsg', 'डेटा सेव नहीं हुआ: ' + err.message);
-  } finally {
-    $('saveBtn').disabled = false;
-  }
-}
-
-// ==========================================
-// SEARCH & DISPLAY
-// ==========================================
-async function searchReport() {
-  const client = getClient();
-  if (!client) return;
-  const date = $('searchDate').value;
-  if (!date) { showStatus('searchMsg', 'तारीख चुनें।'); return; }
-
-  showStatus('searchMsg', 'डेटा लोड हो रहा है...', true);
-  $('pdfContent').classList.add('hidden');
-
-  const { data, error } = await client.from('employee_daily_reports')
-    .select('employee_name, employee_count, report_date')
-    .eq('report_date', date)
-    .order('employee_count', { ascending: false });
-
-  if (error) {
-    showStatus('searchMsg', 'त्रुटि: ' + error.message);
-    return;
-  }
-
-  lastRows = data || [];
-  if (!lastRows.length) {
-    showStatus('searchMsg', `तारीख ${date} का कोई रिकॉर्ड उपलब्ध नहीं है।`);
-    return;
-  }
-
-  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
-  const avg = (total / lastRows.length).toFixed(1);
-
-  $('totalEmployees').textContent = lastRows.length;
-  $('totalCount').textContent = total.toLocaleString('en-IN');$('avgCount').textContent = avg;
-
-  const tbody = $('reportBody');
-  tbody.innerHTML = '';
-
-  lastRows.forEach((r, idx) => {
-    const count = Number(r.employee_count) || 0;
-    const share = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><span class="sno-pill">#${idx + 1}</span></td>
-      <td style="font-weight:600; font-size:14px; color:#0f172a;">${r.employee_name}</td>
-      <td>
-        <div style="font-size:12px; font-weight:600; color:#475569;">${share}%</div>
-        <div class="share-bar-wrap">
-          <div class="share-bar-fill" style="width:${share}%;"></div>
-        </div>
-      </td>
-      <td class="num-col">
-        <span class="count-badge">${count.toLocaleString('en-IN')}</span>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  const totalRow = document.createElement('tr');
-  totalRow.style.background = '#f8fafc';
-  totalRow.style.fontWeight = '700';
-  totalRow.innerHTML = `
-    <td></td>
-    <td style="color:#0f172a; text-transform:uppercase; font-size:13px;">कुल योग (${lastRows.length} कर्मचारी)</td>
-    <td style="font-size:13px; color:#475569;">100.0%</td>
-    <td class="num-col">
-      <span class="count-badge" style="background:#1e3a8a; color:#fff; border-color:#1e3a8a;">${total.toLocaleString('en-IN')}</span>
-    </td>
-  `;
-  tbody.appendChild(totalRow);
-
-  $('pdfContent').classList.remove('hidden');
-  showStatus('searchMsg', `तारीख ${date}: कुल ${lastRows.length} कर्मचारी, योग: ${total}`, true);
-}
-
-function setTodayDate() {
-  $('searchDate').value = getLocalDate();
-  searchReport();
-}
-
-async function deleteCurrentDate() {
-  if (!isAdmin) return;
-  const client = getClient();
-  const date = $('searchDate').value;
-  if (!date) return;
-
-  if (!confirm(`क्या आप तारीख ${date} का सम्पूर्ण डेटा डिलीट करना चाहते हैं?`)) return;
-
-  try {
-    const del = await client.from('employee_daily_reports').delete().eq('report_date', date);
-    if (del.error) throw del.error;
-    showStatus('searchMsg', `तारीख ${date} का डेटा हटा दिया गया।`, true);
-    $('pdfContent').classList.add('hidden');
-    await loadHistoryDates();
-  } catch (err) {
-    showStatus('searchMsg', 'डिलीट करने में त्रुटि: ' + err.message);
-  }
-}
-
-function exportPDF() {
-  if (!lastRows.length) {
-    showStatus('searchMsg', 'पहले किसी तारीख की रिपोर्ट खोलें।');
-    return;
-  }
-  const date = $('searchDate').value;
-  const element = $('pdfContent');
-
-  const opt = {
-    margin: [10, 10, 12, 10],
-    filename: `Employee_Report_${date}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  showStatus('searchMsg', 'PDF तैयार की जा रही है...', true);
-  html2pdf().set(opt).from(element).save().then(() => {
-    showStatus('searchMsg', 'PDF सफलतापूर्वक डाउनलोड हो गई।', true);
-  }).catch(err => {
-    showStatus('searchMsg', 'PDF डाउनलोड त्रुटि: ' + err.message);
-  });
-}
-
-function exportCSV() {
-  if (!lastRows.length) {
-    showStatus('searchMsg', 'डाउनलोड करने के लिए कोई डेटा नहीं है।');
-    return;
-  }
-  const date = $('searchDate').value;
-  const total = lastRows.reduce((sum, r) => sum + (Number(r.employee_count) || 0), 0);
-
-  let csv = 'S.No.,Employee Name,Count,Share (%)\r\n';
-  lastRows.forEach((r, i) => {
-    const c = Number(r.employee_count) || 0;
-    const share = total > 0 ? ((c / total) * 100).toFixed(2) : 0;
-    csv += `"${i + 1}","${r.employee_name.replace(/"/g, '""')}","${c}","${share}%"\r\n`;
-  });
-  csv += `"","TOTAL","${total}","100%"\r\n`;
-
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Employee_Report_${date}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-async function loadHistoryDates() {
-  const client = getClient();
-  if (!client) return;
-  const { data, error } = await client.from('employee_daily_reports')
-    .select('report_date')
-    .order('report_date', { ascending: false })
-    .limit(1000);
-
-  if (error) {
-    $('historyChips').textContent = 'तारीखें लोड नहीं हुईं: ' + error.message;
-    return;
-  }
-
-  const dates = [...new Set((data || []).map(x => x.report_date))];
-  const container = $('historyChips');
-  container.innerHTML = '';
-
-  if (!dates.length) {
-    container.innerHTML = '<span style="font-size:13px; color:var(--text-muted);">कोई पूर्व डेटा उपलब्ध नहीं है।</span>';
-    return;
-  }
-
-  dates.forEach(d => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip';
-    btn.textContent = '📅 ' + d;
-    btn.onclick = () => {
-      $('searchDate').value = d;
-      searchReport();
-      $('searchCard').scrollIntoView({ behavior: 'smooth' });
-    };
-    container.appendChild(btn);
-  });
-}
-
-// ऑटो-लॉगिन अगर पहले से सेव है
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem("app_user");
-  if (saved) {
-    try {
-      const u = JSON.parse(saved);
-      currentUser = { email: u.email };
-      isAdmin = (u.role === "admin");
-      renderDashboard();
-    } catch(e) {}
-  }
+window.addEventListener("load",()=>{
+ $("uploadDate").value=getLocalDate();$("searchDate").value=getLocalDate();
+ const saved=localStorage.getItem("app_user");
+ if(saved){try{const u=JSON.parse(saved);if(u&&u.email&&(u.role==="admin"||u.role==="staff")){currentUser={email:u.email};isAdmin=u.role==="admin";renderDashboard();}}catch(e){localStorage.removeItem("app_user");}}
 });
 </script>
 </body>
