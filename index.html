@@ -391,6 +391,7 @@ function doLogout() {
 // OCR / ADMIN UPLOAD
 // ==========================================
 
+
 function compressImage(file) {
   return new Promise((resolve, reject) => {
     if (!file) {
@@ -398,60 +399,177 @@ function compressImage(file) {
       return;
     }
 
-    if (!file.type || !file.type.startsWith("image/")) {
-      reject(new Error("कृपया JPG, JPEG या PNG फोटो चुनें।"));
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(new Error("मोबाइल से फोटो पढ़ी नहीं जा सकी।"));
+    };
+
+    reader.onload = () => {
+      const img = new Image();
+
+      img.onerror = () => {
+        reject(new Error(
+          "फोटो का फॉर्मेट नहीं पढ़ा जा रहा। Gallery से JPG फोटो चुनें।"
+        ));
+      };
+
+      img.onload = () => {
+        try {
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+
+          if (!w || !h) {
+            throw new Error("फोटो का आकार नहीं मिला।");
+          }
+
+          const max = 1800;
+          const scale = Math.min(1, max / Math.max(w, h));
+
+          w = Math.max(1, Math.round(w * scale));
+          h = Math.max(1, Math.round(h * scale));
+
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("Canvas उपलब्ध नहीं है।");
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const output = canvas.toDataURL("image/jpeg", 0.9);
+
+          if (!output || output === "data:,") {
+            throw new Error("फोटो कन्वर्ट नहीं हो सकी।");
+          }
+
+          resolve(output);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      img.src = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+async function readImageOCR() {
+  if (!isAdmin) {
+    showStatus("ocrMsg", "केवल Admin स्कैन कर सकता है।");
+    return;
+  }
+
+  const file = $("imageFile").files[0];
+
+  if (!file) {
+    showStatus("ocrMsg", "पहले फोटो चुनें।");
+    return;
+  }
+
+  if (!window.Tesseract) {
+    showStatus(
+      "ocrMsg",
+      "OCR लाइब्रेरी लोड नहीं हुई। इंटरनेट चालू करके पेज Refresh करें।"
+    );
+    return;
+  }
+
+  const btn = $("readBtn");
+  btn.disabled = true;
+  $("previewRows").innerHTML = "";
+  $("previewBox").classList.add("hidden");
+
+  try {
+    showStatus("ocrMsg", "फोटो पढ़ी जा रही है...", true);
+
+    const imageData = await compressImage(file);
+
+    showStatus("ocrMsg", "OCR स्कैनिंग शुरू हो रही है...", true);
+
+    const result = await window.Tesseract.recognize(
+      imageData,
+      "eng",
+      {
+        logger: m => {
+          if (m.status === "recognizing text") {
+            showStatus(
+              "ocrMsg",
+              "स्कैनिंग प्रगति: " +
+              Math.round((m.progress || 0) * 100) + "%",
+              true
+            );
+          }
+        }
+      }
+    );
+
+    const lines = (result.data.text || "")
+      .split(/\r?\n/)
+      .map(x => x.replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+
+    const found = [];
+
+    for (const line of lines) {
+      const m = line.match(
+        /^(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]\s*$/
+      );
+
+      if (m) {
+        const name = m[1].trim();
+
+        if (name.length > 1) {
+          found.push({
+            name,
+            count: Number(m[2])
+          });
+        }
+      }
+    }
+
+    const unique = new Map();
+
+    found.forEach(x => {
+      unique.set(x.name.toLowerCase() + "|" + x.count, x);
+    });
+
+    const items = [...unique.values()];
+
+    $("previewBox").classList.remove("hidden");
+
+    if (!items.length) {
+      showStatus(
+        "ocrMsg",
+        "फोटो पढ़ी गई, लेकिन नाम और नंबर नहीं मिले। + कर्मचारी जोड़ें से मैन्युअल एंट्री करें।"
+      );
       return;
     }
 
-    const objectURL = URL.createObjectURL(file);
-    const img = new Image();
+    items.forEach(x => addPreviewRow(x.name, x.count));
 
-    img.onload = () => {
-      try {
-        const max = 1800;
-        let w = img.naturalWidth;
-        let h = img.naturalHeight;
+    showStatus(
+      "ocrMsg",
+      items.length + " रिकॉर्ड मिले। जाँचकर डेटा सेव करें।",
+      true
+    );
 
-        if (!w || !h) {
-          throw new Error("फोटो का आकार पढ़ा नहीं जा सका।");
-        }
-
-        const scale = Math.min(1, max / Math.max(w, h));
-        w = Math.round(w * scale);
-        h = Math.round(h * scale);
-
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas उपलब्ध नहीं है।");
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-
-        // OCR के लिए JPEG Data URL बनाएँ
-        const imageData = canvas.toDataURL("image/jpeg", 0.90);
-
-        URL.revokeObjectURL(objectURL);
-        resolve(imageData);
-      } catch (err) {
-        URL.revokeObjectURL(objectURL);
-        reject(err);
-      }
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectURL);
-      reject(new Error(
-        "फोटो नहीं खुल रही। दूसरी JPG या PNG फोटो चुनें।"
-      ));
-    };
-
-    img.src = objectURL;
-  });
+  } catch (err) {
+    console.error("OCR Error:", err);
+    showStatus(
+      "ocrMsg",
+      "त्रुटि: " + (err.message || String(err))
+    );
+  } finally {
+    btn.disabled = false;
+  }
 }
+
 
 async function readImageOCR() {
   if (!isAdmin) {
