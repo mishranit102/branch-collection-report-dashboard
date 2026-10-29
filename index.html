@@ -20,7 +20,7 @@
 <script>
 // Supabase Project Settings से Project URL और anon/public key भरें। service_role key कभी न डालें।
 const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJucWlhaXpzd21xaGx3cXR4Z2lodSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzkxODgyNTg0LCJleHAiOjIxMDc0NTg1ODR9.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
 let sb=null,currentUser=null,isAdmin=false,lastRows=[];
 const $=id=>document.getElementById(id);
 function showStatus(id,text,isOk=false){const el=$(id);if(!el)return;if(!text){el.className="status";el.textContent="";return;}el.textContent=text;el.className="status active "+(isOk?"ok":"err");}
