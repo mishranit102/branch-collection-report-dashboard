@@ -5,30 +5,70 @@
 <title>Employee Daily Performance Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{--primary:#1e3a8a;--blue:#3b82f6;--bg:#f1f5f9;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--danger:#b91c1c}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Devanagari",sans-serif;line-height:1.5}header{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:18px 16px}.header-container{max-width:1080px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:20px}header p{color:#cbd5e1;font-size:13px;margin-top:4px}main{max-width:1080px;margin:20px auto;padding:0 14px}.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 1px 4px #0000000a}.card-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}.card-title{font-size:17px;font-weight:700}.card-desc{font-size:13px;color:var(--muted);margin-top:3px}label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}input[type=email],input[type=password],input[type=date],input[type=file],input[type=text],input[type=number]{width:100%;min-width:0;padding:11px 12px;font-size:15px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:var(--text)}input:focus{outline:2px solid #93c5fd;border-color:var(--blue)}.row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}button{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:700;padding:11px 15px;border-radius:8px;border:0;cursor:pointer;background:var(--primary);color:#fff}button:disabled{opacity:.55;cursor:wait}button.alt{background:#f1f5f9;color:var(--text);border:1px solid var(--border)}button.danger{background:var(--danger);color:#fff}button.sm{padding:7px 10px;font-size:12px}.status{display:none;font-size:14px;margin-top:12px;padding:11px 12px;border-radius:8px;font-weight:600;overflow-wrap:anywhere}.status.active{display:block}.status.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}.status.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.hidden{display:none!important}.role-pill{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af}.role-admin{background:#ef4444;color:#fff}.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:14px}.stat-card{background:#fff;border:1px solid var(--border);padding:13px;border-radius:10px}.stat-card span{font-size:12px;color:var(--muted);font-weight:700}.stat-card strong{display:block;font-size:24px;margin-top:4px}.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:500px;text-align:left}th{background:#f8fafc;color:#475569;font-size:12px;padding:11px;border-bottom:1px solid var(--border)}td{padding:11px;font-size:14px;border-bottom:1px solid var(--border)}.num{text-align:right}.count-badge{display:inline-block;background:#f1f5f9;padding:4px 9px;border-radius:6px;font-weight:700}.sharebar{height:6px;background:#e2e8f0;border-radius:9px;overflow:hidden;max-width:120px;margin-top:4px}.sharefill{height:100%;background:var(--blue)}#previewRows{display:grid;gap:8px;margin-top:12px}.editrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(90px,1fr) auto;gap:8px;align-items:center;background:#f8fafc;padding:8px;border:1px solid var(--border);border-radius:8px}.history-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chip{background:#fff;color:#1e3a8a;border:1px solid var(--border);padding:7px 10px;border-radius:8px}.small-note{font-size:12px;color:var(--muted);margin-top:8px}@media(max-width:520px){.card{padding:14px}.editrow{grid-template-columns:1fr 100px auto}.header-container{align-items:flex-start}h1{font-size:18px}button{padding:10px 12px}}
+
+#loZeroTable{min-width:850px}
+#loZeroTable th,#loZeroTable td{white-space:nowrap}
+.lozero-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
+.lozero-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0}
+.lozero-summary .stat-card strong{color:#047857}
+
 </style></head>
 <body>
 <header><div class="header-container"><div><h1>📊 Employee Daily Performance</h1><p>कर्मचारी रिपोर्ट पोर्टल — तारीख चुनें, रिपोर्ट देखें और डाउनलोड करें</p></div><div id="userHeaderSection" class="hidden"><span id="userEmailTxt"></span> <span id="userRoleBadge" class="role-pill">Staff</span> <button type="button" class="alt sm" onclick="doLogout()">लॉगआउट</button></div></div></header>
 <main>
 <section class="card" id="setupCard"><div class="card-header"><div><h2 class="card-title">🔐 पोर्टल लॉगिन</h2><p class="card-desc">डेमो Admin password <b>admin123</b>; Staff password <b>staff123</b></p></div></div><div class="row"><div><label for="email">ईमेल</label><input id="email" type="email" placeholder="अपना ईमेल लिखें" autocomplete="username"></div><div><label for="password">पासवर्ड</label><input id="password" type="password" placeholder="पासवर्ड" autocomplete="current-password"></div></div><button type="button" id="loginBtn" style="width:100%;margin-top:14px" onclick="doInstantLogin()">लॉगिन करें</button><div id="authMsg" class="status"></div><p class="small-note">महत्वपूर्ण: यह केवल डेमो लॉगिन है, सुरक्षित प्रमाणीकरण नहीं। शाखा का गोपनीय डेटा सार्वजनिक रूप से न रखें।</p></section>
 <section class="card hidden" id="uploadCard"><div class="card-header"><div><h2 class="card-title">📷 तारीख की फोटो अपलोड (OCR Scanning)</h2><p class="card-desc">Xerox शीट की फोटो से कर्मचारी नाम और संख्या पढ़ने का प्रयास करें।</p></div><span class="role-pill role-admin">Admin</span></div><div class="row"><div><label for="uploadDate">रिपोर्ट तारीख</label><input id="uploadDate" type="date"></div><div><label for="imageFile">दस्तावेज़ / Xerox फोटो</label><input id="imageFile" type="file" accept="image/*"></div></div><button type="button" id="readBtn" style="margin-top:12px" onclick="readImageOCR()">🔍 फोटो स्कैन करें (OCR)</button><div id="ocrMsg" class="status"></div><div id="previewBox" class="hidden" style="margin-top:16px;border-top:1px dashed var(--border);padding-top:14px"><h3 style="font-size:15px">डेटा सत्यापन व सुधार</h3><div id="previewRows"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="alt" onclick="addPreviewRow()">+ कर्मचारी जोड़ें</button><button type="button" id="saveBtn" onclick="saveReportData()">💾 डेटा सेव करें</button></div></div></section>
+
+<section class="card hidden" id="loZeroCard">
+ <div class="card-header"><div><h2 class="card-title">📋 LO Wise – Due Date Wise Overdue Zero Report</h2><p class="card-desc">Demand & Collection Excel चुनें। केवल Total Overdue = 0 वाले ग्राहक दिखेंगे। डेटा इसी ब्राउज़र में प्रोसेस होगा।</p></div></div>
+ <div class="row">
+  <div><label for="loZeroFile">Demand & Collection Excel File</label><input id="loZeroFile" type="file" accept=".xlsx,.xls"></div>
+  <div style="display:flex;align-items:end"><button type="button" id="loZeroReadBtn" onclick="loadLoZeroExcel()">📂 Excel पढ़ें</button></div>
+ </div>
+ <div id="loZeroMsg" class="status"></div>
+ <div id="loZeroFilters" class="hidden">
+  <div class="lozero-filters">
+   <div><label for="loZeroOfficer">LO Name</label><select id="loZeroOfficer" onchange="renderLoZeroReport()" style="width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px"><option value="">सभी LO</option></select></div>
+   <div><label for="loZeroFrom">Due Date From</label><input id="loZeroFrom" type="date" onchange="renderLoZeroReport()"></div>
+   <div><label for="loZeroTo">Due Date To</label><input id="loZeroTo" type="date" onchange="renderLoZeroReport()"></div>
+  </div>
+  <div class="lozero-summary">
+   <div class="stat-card"><span>Overdue Zero Clients</span><strong id="loZeroCount">0</strong></div>
+   <div class="stat-card"><span>LO की संख्या</span><strong id="loZeroLOCount">0</strong></div>
+   <div class="stat-card"><span>Due Dates</span><strong id="loZeroDateCount">0</strong></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px">
+   <button type="button" onclick="downloadLoZeroExcel()">📊 Excel डाउनलोड</button>
+   <button type="button" class="alt" onclick="downloadLoZeroPDF()">📄 PDF डाउनलोड</button>
+   <button type="button" class="alt" onclick="resetLoZeroFilters()">↺ Filter Reset</button>
+  </div>
+  <div id="loZeroPrintArea">
+   <h3 style="font-size:15px;margin:8px 0">Overdue Zero Client Details</h3>
+   <div class="table-wrap"><table id="loZeroTable"><thead><tr><th>क्रम</th><th>LO Name</th><th>Due Date</th><th>Account Number</th><th>Customer Name</th><th>Total Overdue</th></tr></thead><tbody id="loZeroBody"></tbody></table></div>
+  </div>
+ </div>
+ <p class="small-note">नोट: रिपोर्ट में Column B (UpdatedLO), C (account_no), D (CustomerName), I (Due_date) और T (Total Overdue) का उपयोग होता है।</p>
+</section>
+
 <section class="card hidden" id="searchCard"><div class="card-header"><div><h2 class="card-title">🔎 कर्मचारी रिपोर्ट खोजें</h2><p class="card-desc">तारीख चुनकर उस दिन का विवरण देखें या डाउनलोड करें।</p></div><div style="width:170px;max-width:100%"><label for="searchDate">रिपोर्ट तारीख</label><input id="searchDate" type="date"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button type="button" onclick="searchReport()">🔍 रिपोर्ट देखें</button><button type="button" class="alt" onclick="setTodayDate()">📅 आज</button><button type="button" class="alt" onclick="exportPDF()">📄 PDF डाउनलोड</button><button type="button" class="alt" onclick="exportCSV()">📊 Excel / CSV</button><button type="button" id="deleteDateBtn" class="danger hidden" onclick="deleteCurrentDate()">🗑️ तारीख हटाएँ</button></div><div id="searchMsg" class="status"></div><div id="pdfContent" class="hidden"><div class="stats-grid"><div class="stat-card"><span>कुल कर्मचारी रिकॉर्ड</span><strong id="totalEmployees">0</strong></div><div class="stat-card"><span>कुल योग</span><strong id="totalCount">0</strong></div><div class="stat-card"><span>प्रति रिकॉर्ड औसत</span><strong id="avgCount">0</strong></div></div><div class="table-wrap"><table><thead><tr><th>क्रम</th><th>कर्मचारी का नाम</th><th>योगदान (% शेयर)</th><th class="num">संख्या</th></tr></thead><tbody id="reportBody"></tbody></table></div></div></section>
 <section class="card hidden" id="historyCard"><div class="card-header"><div><h2 class="card-title">🗂️ उपलब्ध तारीखें (Archive)</h2><p class="card-desc">किसी तारीख पर क्लिक करके रिपोर्ट खोलें।</p></div></div><div id="historyChips" class="history-chips"></div></section>
 </main>
 <script>
 // Supabase Project Settings से Project URL और anon/public key भरें। service_role key कभी न डालें।
 const SUPABASE_URL = "https://nqiaizswmqhlwqtxgihu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xaWFpenN3bXFobHdxdHhnaWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4ODI1ODQsImV4cCI6MjEwNzQ1ODU4NH0.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXAiLCJyZWYiOiJucWlhaXpzd21xaGx3cXR4Z2lodSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzkxODgyNTg0LCJleHAiOjIxMDc0NTg1ODR9.4gUeKygK74kYWiYqzEfayjysCY3AC61x0LH9Pc1HJiw";
 let sb=null,currentUser=null,isAdmin=false,lastRows=[];
 const $=id=>document.getElementById(id);
 function showStatus(id,text,isOk=false){const el=$(id);if(!el)return;if(!text){el.className="status";el.textContent="";return;}el.textContent=text;el.className="status active "+(isOk?"ok":"err");}
 function getLocalDate(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
 function getClient(){if(!sb&&window.supabase&&SUPABASE_ANON_KEY!="PASTE_YOUR_SUPABASE_ANON_KEY_HERE")sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);return sb;}
 function doInstantLogin(){const email=$("email").value.trim(),password=$("password").value;if(!email){showStatus("authMsg","कृपया ईमेल भरें।");return;}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showStatus("authMsg","कृपया सही ईमेल पता लिखें।");return;}if(password==="admin123"){currentUser={email};isAdmin=true;localStorage.setItem("app_user",JSON.stringify({email,role:"admin"}));renderDashboard();return;}if(password==="staff123"){currentUser={email};isAdmin=false;localStorage.setItem("app_user",JSON.stringify({email,role:"staff"}));renderDashboard();return;}showStatus("authMsg","गलत पासवर्ड। डेमो Admin: admin123 या Staff: staff123");}
-function renderDashboard(){$("setupCard").classList.add("hidden");$("userHeaderSection").classList.remove("hidden");$("searchCard").classList.remove("hidden");$("historyCard").classList.remove("hidden");$("userEmailTxt").textContent=currentUser.email;const badge=$("userRoleBadge");badge.textContent=isAdmin?"Admin":"Staff";badge.className="role-pill"+(isAdmin?" role-admin":"");$("uploadCard").classList.toggle("hidden",!isAdmin);$("deleteDateBtn").classList.toggle("hidden",!isAdmin);$("uploadDate").value=getLocalDate();$("searchDate").value=getLocalDate();loadHistoryDates();searchReport();}
-function doLogout(){localStorage.removeItem("app_user");currentUser=null;isAdmin=false;lastRows=[];["setupCard"].forEach(id=>$(id).classList.remove("hidden"));["userHeaderSection","uploadCard","searchCard","historyCard","pdfContent"].forEach(id=>$(id).classList.add("hidden"));showStatus("authMsg","");$("password").value="";}
+function renderDashboard(){$("setupCard").classList.add("hidden");$("userHeaderSection").classList.remove("hidden");$("searchCard").classList.remove("hidden");$("historyCard").classList.remove("hidden");$("loZeroCard").classList.remove("hidden");$("userEmailTxt").textContent=currentUser.email;const badge=$("userRoleBadge");badge.textContent=isAdmin?"Admin":"Staff";badge.className="role-pill"+(isAdmin?" role-admin":"");$("uploadCard").classList.toggle("hidden",!isAdmin);$("deleteDateBtn").classList.toggle("hidden",!isAdmin);$("uploadDate").value=getLocalDate();$("searchDate").value=getLocalDate();loadHistoryDates();searchReport();}
+function doLogout(){localStorage.removeItem("app_user");currentUser=null;isAdmin=false;lastRows=[];["setupCard"].forEach(id=>$(id).classList.remove("hidden"));["userHeaderSection","uploadCard","searchCard","historyCard","pdfContent","loZeroCard"].forEach(id=>$(id).classList.add("hidden"));showStatus("authMsg","");$("password").value="";}
 function compressImage(file){return new Promise((resolve,reject)=>{if(!file){reject(new Error("पहले फोटो चुनें।"));return;}if(!file.type||!file.type.startsWith("image/")){reject(new Error("कृपया JPG या PNG फोटो चुनें।"));return;}const reader=new FileReader();reader.onerror=()=>reject(new Error("मोबाइल से फोटो पढ़ी नहीं जा सकी।"));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("फोटो नहीं खुली। Gallery से दूसरी JPG फोटो चुनें।"));img.onload=()=>{try{let w=img.naturalWidth,h=img.naturalHeight;if(!w||!h)throw new Error("फोटो का आकार नहीं मिला।");const scale=Math.min(1,1800/Math.max(w,h));w=Math.round(w*scale);h=Math.round(h*scale);const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas उपलब्ध नहीं है।");ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);const out=canvas.toDataURL("image/jpeg",.9);if(out==="data:," )throw new Error("फोटो कन्वर्ट नहीं हुई।");resolve(out);}catch(e){reject(e);}};img.src=reader.result;};reader.readAsDataURL(file);});}
 function addPreviewRow(name="",count=0){const container=$("previewRows");const row=document.createElement("div");row.className="editrow";const n=document.createElement("input");n.type="text";n.className="empname";n.placeholder="कर्मचारी का नाम";n.value=name;n.setAttribute("aria-label","कर्मचारी का नाम");const c=document.createElement("input");c.type="number";c.className="empcount";c.placeholder="संख्या";c.min="0";c.step="1";c.value=count;c.setAttribute("aria-label","कर्मचारी की संख्या");const b=document.createElement("button");b.type="button";b.className="danger sm";b.textContent="हटाएँ";b.onclick=()=>row.remove();row.append(n,c,b);container.appendChild(row);}
 async function readImageOCR(){if(!isAdmin){showStatus("ocrMsg","केवल Admin स्कैन कर सकता है।");return;}const file=$("imageFile").files[0];if(!file){showStatus("ocrMsg","पहले फोटो चुनें।");return;}if(!window.Tesseract||typeof Tesseract.recognize!=="function"){showStatus("ocrMsg","OCR लाइब्रेरी लोड नहीं हुई। इंटरनेट चालू करके Refresh करें।");return;}const btn=$("readBtn");btn.disabled=true;$("previewRows").innerHTML="";$("previewBox").classList.add("hidden");try{showStatus("ocrMsg","फोटो तैयार की जा रही है...",true);const image=await compressImage(file);const result=await Tesseract.recognize(image,"eng",{logger:m=>{if(m.status==="recognizing text")showStatus("ocrMsg","स्कैनिंग प्रगति: "+Math.round((m.progress||0)*100)+"%",true);}});const lines=(result?.data?.text||"").split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean),found=[];for(const line of lines){const m=line.match(/^(.+?)\s*[\(\[]\s*(\d{1,6})\s*[\)\]]\s*$/);if(m){const name=m[1].replace(/[|•·\-_:]+$/g,"").trim();if(name.length>1&&!/select all|filter by|ascending|descending|search/i.test(name))found.push({name,count:Number(m[2])});}}const unique=new Map();found.forEach(x=>unique.set(x.name.toLowerCase()+"|"+x.count,x));const items=[...unique.values()];$("previewBox").classList.remove("hidden");if(!items.length){showStatus("ocrMsg",'नाम और (नंबर) का पैटर्न नहीं मिला। “+ कर्मचारी जोड़ें” से मैन्युअल डेटा भरें।');return;}items.forEach(x=>addPreviewRow(x.name,x.count));showStatus("ocrMsg",items.length+" रिकॉर्ड मिले। जाँचकर डेटा सेव करें।",true);}catch(err){console.error(err);showStatus("ocrMsg","स्कैनिंग त्रुटि: "+(err?.message||String(err)));}finally{btn.disabled=false;}}
@@ -39,5 +79,79 @@ async function deleteCurrentDate(){if(!isAdmin)return;const client=getClient(),d
 function exportPDF(){if(!lastRows.length){showStatus("searchMsg","पहले किसी तारीख की रिपोर्ट खोलें।");return;}if(typeof html2pdf!=="function"){showStatus("searchMsg","PDF लाइब्रेरी लोड नहीं हुई। इंटरनेट जाँचें।");return;}const date=$("searchDate").value;showStatus("searchMsg","PDF तैयार हो रही है...",true);html2pdf().set({margin:10,filename:"Employee_Report_"+date+".pdf",image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from($("pdfContent")).save().then(()=>showStatus("searchMsg","PDF डाउनलोड हो गई।",true)).catch(e=>showStatus("searchMsg","PDF त्रुटि: "+e.message));}
 function exportCSV(){if(!lastRows.length){showStatus("searchMsg","डाउनलोड करने के लिए कोई डेटा नहीं है।");return;}const date=$("searchDate").value,total=lastRows.reduce((s,r)=>s+(Number(r.employee_count)||0),0);let csv="S.No.,Employee Name,Count,Share (%)\r\n";lastRows.forEach((r,i)=>{const c=Number(r.employee_count)||0,share=total>0?(c/total*100).toFixed(2):"0.00";csv+=`"${i+1}","${String(r.employee_name||"").replace(/"/g,'""')}","${c}","${share}%"\r\n`;});csv+=`,"TOTAL","${total}","${total>0?"100%":"0%"}"\r\n`;const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="Employee_Report_"+date+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 async function loadHistoryDates(){const client=getClient();if(!client)return;try{const {data,error}=await client.from("employee_daily_reports").select("report_date").order("report_date",{ascending:false}).limit(1000);if(error)throw error;const dates=[...new Set((data||[]).map(x=>x.report_date))],container=$("historyChips");container.innerHTML="";if(!dates.length){container.textContent="कोई पुराना डेटा उपलब्ध नहीं है।";return;}dates.forEach(date=>{const btn=document.createElement("button");btn.type="button";btn.className="chip";btn.textContent="📅 "+date;btn.onclick=()=>{$("searchDate").value=date;searchReport();$("searchCard").scrollIntoView({behavior:"smooth"});};container.appendChild(btn);});}catch(err){$("historyChips").textContent="तारीखें लोड नहीं हुईं: "+(err.message||String(err));}}
+
+// LO-wise Overdue Zero report: source Excel is processed locally in the browser.
+let loZeroAllRows = [], loZeroFilteredRows = [];
+function loZeroNorm(v){return String(v==null?"":v).toLowerCase().replace(/[\s_\-\/]+/g,"").replace(/[^a-z0-9]/g,"");}
+function loZeroDate(v){
+ if(v instanceof Date && !isNaN(v)) return new Date(v.getFullYear(),v.getMonth(),v.getDate());
+ if(typeof v==="number" && isFinite(v)){const p=XLSX.SSF.parse_date_code(v);if(p)return new Date(p.y,p.m-1,p.d);}
+ const s=String(v==null?"":v).trim();if(!s)return null;
+ let m=s.match(/^(\d{1,2})[-\/ ]([A-Za-z]{3})[-\/ ](\d{2,4})$/);
+ if(m){const months={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};let y=Number(m[3]);if(y<100)y+=2000;const d=new Date(y,months[m[2].toLowerCase()],Number(m[1]));return isNaN(d)?null:d;}
+ m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+ if(m){let y=Number(m[3]);if(y<100)y+=2000;const d=new Date(y,Number(m[2])-1,Number(m[1]));return isNaN(d)?null:d;}
+ const d=new Date(s);return isNaN(d)?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function loZeroISO(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):"";}
+function loZeroDisplay(d){return d?d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"";}
+async function loadLoZeroExcel(){
+ const f=$("loZeroFile").files[0];if(!f){showStatus("loZeroMsg","पहले Demand & Collection Excel file चुनें।");return;}
+ if(!window.XLSX){showStatus("loZeroMsg","Excel लाइब्रेरी लोड नहीं हुई। इंटरनेट जाँचें।");return;}
+ const btn=$("loZeroReadBtn");btn.disabled=true;showStatus("loZeroMsg","Excel पढ़ी जा रही है...",true);
+ try{
+  const buf=await f.arrayBuffer(),wb=XLSX.read(buf,{type:"array",cellDates:true});
+  const ws=wb.Sheets[wb.SheetNames[0]];if(!ws)throw new Error("पहली Sheet उपलब्ध नहीं है।");
+  const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+  let headerIndex=-1,idx={};
+  for(let r=0;r<Math.min(matrix.length,30);r++){
+   const h=matrix[r].map(loZeroNorm);
+   const find=(names,fallback)=>{for(let i=0;i<h.length;i++)if(names.includes(h[i]))return i;return fallback;};
+   const candidate={lo:find(["updatedlo","lo","loanofficer","loanofficername"],1),account:find(["accountno","accountnumber","account"],2),customer:find(["customername","clientname","membername"],3),due:find(["duedate","duedate"],8),overdue:find(["totaloverdue","overdue"],19)};
+   if(h.includes("updatedlo") && h.includes("accountno") && h.includes("customername")){headerIndex=r;idx=candidate;break;}
+  }
+  if(headerIndex<0)throw new Error("Header row नहीं मिली। UpdatedLO, account_no, CustomerName और Total Overdue कॉलम वाली Demand & Collection फाइल चुनें।");
+  const rows=[];
+  for(let r=headerIndex+1;r<matrix.length;r++){
+   const row=matrix[r],lo=String(row[idx.lo]||"").trim(),account=String(row[idx.account]||"").trim(),customer=String(row[idx.customer]||"").trim();
+   const ov=String(row[idx.overdue]??"").trim().replace(/,/g,"");
+   if(!lo&&!account&&!customer)continue;
+   const due=loZeroDate(row[idx.due]),num=ov===""?NaN:Number(ov);
+   if(num===0)rows.push({lo,account,customer,due,dueISO:loZeroISO(due),overdue:0});
+  }
+  loZeroAllRows=rows;const select=$("loZeroOfficer");select.innerHTML='<option value="">सभी LO</option>';
+  [...new Set(rows.map(x=>x.lo).filter(Boolean))].sort((a,b)=>a.localeCompare(b)).forEach(name=>{const o=document.createElement("option");o.value=name;o.textContent=name;select.appendChild(o);});
+  $("loZeroFilters").classList.remove("hidden");renderLoZeroReport();
+  showStatus("loZeroMsg","Excel पढ़ ली गई। कुल "+rows.length.toLocaleString("en-IN")+" Overdue Zero Client मिले।",true);
+ }catch(e){loZeroAllRows=[];$("loZeroFilters").classList.add("hidden");showStatus("loZeroMsg","Excel पढ़ने में समस्या: "+(e.message||String(e)));}
+ finally{btn.disabled=false;}
+}
+function renderLoZeroReport(){
+ const lo=$("loZeroOfficer").value,from=$("loZeroFrom").value,to=$("loZeroTo").value;
+ loZeroFilteredRows=loZeroAllRows.filter(x=>(!lo||x.lo===lo)&&(!from||x.dueISO&&x.dueISO>=from)&&(!to||x.dueISO&&x.dueISO<=to));
+ $("loZeroCount").textContent=loZeroFilteredRows.length.toLocaleString("en-IN");
+ $("loZeroLOCount").textContent=new Set(loZeroFilteredRows.map(x=>x.lo)).size.toLocaleString("en-IN");
+ $("loZeroDateCount").textContent=new Set(loZeroFilteredRows.map(x=>x.dueISO).filter(Boolean)).size.toLocaleString("en-IN");
+ const body=$("loZeroBody");body.innerHTML="";
+ const sorted=[...loZeroFilteredRows].sort((a,b)=>a.lo.localeCompare(b.lo)||a.dueISO.localeCompare(b.dueISO)||a.customer.localeCompare(b.customer));
+ sorted.forEach((x,i)=>{const tr=document.createElement("tr");[i+1,x.lo,loZeroDisplay(x.due),x.account,x.customer,"0"].forEach((v,j)=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td);});body.appendChild(tr);});
+ if(!sorted.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=6;td.textContent="चुने गए Filter में कोई Overdue Zero Client नहीं मिला।";td.style.textAlign="center";tr.appendChild(td);body.appendChild(tr);}
+}
+function resetLoZeroFilters(){$("loZeroOfficer").value="";$("loZeroFrom").value="";$("loZeroTo").value="";renderLoZeroReport();}
+function downloadLoZeroExcel(){
+ if(!loZeroFilteredRows.length){showStatus("loZeroMsg","डाउनलोड के लिए कोई रिकॉर्ड नहीं है।");return;}
+ const data=[["S.No.","LO Name","Due Date","Account Number","Customer Name","Total Overdue"],...loZeroFilteredRows.map((x,i)=>[i+1,x.lo,loZeroDisplay(x.due),x.account,x.customer,0])];
+ const ws=XLSX.utils.aoa_to_sheet(data);ws["!cols"]=[{wch:8},{wch:28},{wch:16},{wch:22},{wch:30},{wch:16}];
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Overdue Zero");
+ const suffix=($("loZeroOfficer").value||"All_LO").replace(/[^a-z0-9_-]/gi,"_");
+ XLSX.writeFile(wb,"LO_Overdue_Zero_"+suffix+".xlsx");
+}
+function downloadLoZeroPDF(){
+ if(!loZeroFilteredRows.length){showStatus("loZeroMsg","PDF के लिए कोई रिकॉर्ड नहीं है।");return;}
+ if(typeof html2pdf!=="function"){showStatus("loZeroMsg","PDF लाइब्रेरी लोड नहीं हुई। इंटरनेट जाँचें।");return;}
+ const area=$("loZeroPrintArea"),date=new Date().toISOString().slice(0,10);
+ html2pdf().set({margin:8,filename:"LO_Overdue_Zero_"+date+".pdf",image:{type:"jpeg",quality:.96},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:"mm",format:"a4",orientation:"landscape"}}).from(area).save().then(()=>showStatus("loZeroMsg","PDF डाउनलोड हो गई।",true)).catch(e=>showStatus("loZeroMsg","PDF त्रुटि: "+e.message));
+}
+
 window.addEventListener("load",()=>{$("uploadDate").value=getLocalDate();$("searchDate").value=getLocalDate();const saved=localStorage.getItem("app_user");if(saved){try{const u=JSON.parse(saved);if(u&&u.email&&(u.role==="admin"||u.role==="staff")){currentUser={email:u.email};isAdmin=u.role==="admin";renderDashboard();}}catch(e){localStorage.removeItem("app_user");}}});
 </script></body></html>
